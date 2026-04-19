@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,14 +7,55 @@
   <title>Claude Codeってなに？エンジニアじゃなくてもわかる入門ガイド</title>
 
   <style>
-    /* ========== ページ本体のスタイル ========== */
+    /* ========== カラー変数 ========== */
+    :root {
+      --bg:        #ffffff;
+      --fg:        #222222;
+      --fg-sub:    #555555;
+      --border:    #555555;
+      --note-bg:   #f5f5f5;
+      --note-fg:   #444444;
+
+      --ui-bg:     rgba(20, 20, 20, 0.92);
+      --ui-fg:     #ffffff;
+      --ui-btn-bg: #ffffff;
+      --ui-btn-fg: #111111;
+
+      --toggle-bg: #e8e8e8;
+      --toggle-fg: #222222;
+    }
+    [data-theme="dark"] {
+      --bg:        #1a1a1a;
+      --fg:        #e8e8e8;
+      --fg-sub:    #aaaaaa;
+      --border:    #888888;
+      --note-bg:   #2a2a2a;
+      --note-fg:   #cccccc;
+
+      --ui-bg:     rgba(240, 240, 240, 0.92);
+      --ui-fg:     #111111;
+      --ui-btn-bg: #111111;
+      --ui-btn-fg: #ffffff;
+
+      --toggle-bg: #333333;
+      --toggle-fg: #e8e8e8;
+    }
+
+    /* ========== ページ本体 ========== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      background: var(--bg);
+      transition: background 0.2s, color 0.2s;
+    }
     body {
       max-width: 720px;
       margin: 0 auto;
       padding: 40px 24px 120px;
       font: 18px/1.9 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
-      color: #222;
-      background: #fff;
+      color: var(--fg);
+      background: var(--bg);
+      transition: background 0.2s, color 0.2s;
     }
     h1 {
       font-size: 1.7em;
@@ -26,38 +67,59 @@
       margin-top: 2.4em;
       margin-bottom: 0.5em;
       padding-left: 0.7em;
-      border-left: 4px solid #555;
+      border-left: 4px solid var(--border);
     }
-    p  { margin: 0 0 1.2em; }
+    p { margin: 0 0 1.2em; }
     .lead {
       font-size: 1.05em;
-      color: #555;
+      color: var(--fg-sub);
       margin-bottom: 2em;
     }
     .note {
-      background: #f5f5f5;
+      background: var(--note-bg);
+      color: var(--note-fg);
       border-radius: 8px;
       padding: 16px 20px;
       margin: 1.6em 0;
       font-size: 0.95em;
-      color: #444;
+      transition: background 0.2s, color 0.2s;
     }
 
-    /* ========== ナビゲーター UI ========== */
+    /* ========== ダークモード切り替えボタン ========== */
+    #__theme_toggle__ {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2147483647;
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      background: var(--toggle-bg);
+      color: var(--toggle-fg);
+      font: 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      transition: background 0.2s, color 0.2s;
+    }
+    #__theme_toggle__:hover { opacity: .85; }
+
+    /* ========== 文章ナビゲーター UI ========== */
     #__sub_ui__ {
       position: fixed;
       bottom: 24px;
-      right: 24px;
+      right: 16px;
       z-index: 2147483647;
       display: flex;
       gap: 8px;
       align-items: center;
       padding: 10px 12px;
-      background: rgba(20, 20, 20, 0.92);
-      color: #fff;
+      background: var(--ui-bg);
+      color: var(--ui-fg);
       border-radius: 12px;
       font: 14px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+      transition: background 0.2s, color 0.2s;
     }
     #__sub_ui__ button {
       appearance: none;
@@ -65,9 +127,10 @@
       border-radius: 8px;
       padding: 8px 10px;
       cursor: pointer;
-      background: #fff;
-      color: #111;
+      background: var(--ui-btn-bg);
+      color: var(--ui-btn-fg);
       font: inherit;
+      transition: background 0.2s, color 0.2s;
     }
     #__sub_ui__ button:hover { opacity: .9; }
     #__sub_ui__ .__sub_counter__ {
@@ -95,6 +158,9 @@
   </style>
 </head>
 <body>
+
+  <!-- ダークモード切り替えボタン -->
+  <button id="__theme_toggle__" type="button" aria-label="ダークモード切り替え">🌙 ダーク</button>
 
   <h1>Claude Codeってなに？<br>エンジニアじゃなくてもわかる入門ガイド</h1>
   <p class="lead">「最近よく聞くけど、普通のClaudeと何が違うの？」そんな疑問にやさしく答えます。</p>
@@ -201,26 +267,45 @@
   </p>
 
 
-  <!-- ============================================================
-       文章ナビゲーター
-  ============================================================ -->
   <script>
+    /* ========== ダークモード切り替え ========== */
+    (() => {
+      const html   = document.documentElement;
+      const btn    = document.getElementById("__theme_toggle__");
+      const STORE  = "theme";
+
+      // 初期テーマ：保存値 → OSの設定 → light の順で決定
+      const saved = localStorage.getItem(STORE);
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const initial = saved ?? (prefersDark ? "dark" : "light");
+      applyTheme(initial);
+
+      btn.addEventListener("click", () => {
+        const next = html.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(next);
+        localStorage.setItem(STORE, next);
+      });
+
+      function applyTheme(theme) {
+        html.dataset.theme = theme;
+        btn.textContent = theme === "dark" ? "☀️ ライト" : "🌙 ダーク";
+      }
+    })();
+
+    /* ========== 文章ナビゲーター ========== */
     (() => {
       const UI_ID        = "__sub_ui__";
       const SENTENCE_CLS = "__sub_sentence__";
       const ACTIVE_CLS   = "__sub_active__";
 
-      const state = {
-        sentences: [],
-        currentIndex: -1,
-        ui: null,
-      };
+      const state = { sentences: [], currentIndex: -1, ui: null };
 
       function shouldSkip(node) {
         if (!node?.nodeValue?.trim()) return true;
         const p = node.parentElement;
         if (!p) return true;
         if (p.closest(`#${UI_ID}`)) return true;
+        if (p.closest(`#__theme_toggle__`)) return true;
         if (p.closest(`.${SENTENCE_CLS}`)) return true;
         if (p.closest("script,style,noscript,iframe,svg,canvas,textarea,input,button,select,option,code,pre")) return true;
         if (p.isContentEditable || p.closest("[contenteditable]")) return true;
@@ -246,10 +331,7 @@
         const created = [];
         for (const piece of pieces) {
           if (!piece) continue;
-          if (!piece.trim()) {
-            frag.appendChild(document.createTextNode(piece));
-            continue;
-          }
+          if (!piece.trim()) { frag.appendChild(document.createTextNode(piece)); continue; }
           const span = document.createElement("span");
           span.className = SENTENCE_CLS;
           span.textContent = piece;
@@ -263,8 +345,7 @@
 
       function collectAndWrap() {
         const walker = document.createTreeWalker(
-          document.body,
-          NodeFilter.SHOW_TEXT,
+          document.body, NodeFilter.SHOW_TEXT,
           { acceptNode: n => shouldSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }
         );
         const nodes = [];
@@ -279,8 +360,7 @@
         const el = state.ui?.querySelector(".__sub_counter__");
         if (!el) return;
         el.textContent = state.sentences.length
-          ? `${state.currentIndex + 1} / ${state.sentences.length}`
-          : "0 / 0";
+          ? `${state.currentIndex + 1} / ${state.sentences.length}` : "0 / 0";
       }
 
       function setCurrent(index, scroll = true) {
