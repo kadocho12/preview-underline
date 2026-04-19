@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>サンプルページ</title>
+
+  <style>
+    /* ========== ページ本体のスタイル（自由に変更） ========== */
+    body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 120px;
+      font: 18px/1.8 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #222;
+    }
+
+    /* ========== 文章ナビゲーター UI ========== */
+    #__sub_ui__ {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2147483647;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(20, 20, 20, 0.92);
+      color: #fff;
+      border-radius: 12px;
+      font: 14px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+    }
+    #__sub_ui__ button {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: #fff;
+      color: #111;
+      font: inherit;
+    }
+    #__sub_ui__ button:hover { opacity: .9; }
+    #__sub_ui__ .__sub_counter__ {
+      min-width: 72px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ========== 文ハイライト ========== */
+    .__sub_sentence__ { cursor: pointer; }
+    .__sub_sentence__.__sub_active__ {
+      text-decoration-line: underline;
+      text-decoration-thickness: 0.22em;
+      text-underline-offset: 0.18em;
+      text-decoration-color: #ff5a5f;
+      background-image: linear-gradient(
+        to top,
+        rgba(255, 90, 95, .14),
+        rgba(255, 90, 95, .14)
+      );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      border-radius: .15em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       ここにページ本文を書く
+  ============================================================ -->
+  <h1>見出し</h1>
+  <h2>見出し2</h2>
+  <p>
+    吾輩は猫である。名前はまだ無い。
+    どこで生れたかとんと見当がつかぬ。
+    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+  </p>
+  <p>
+    吾輩はここで始めて人間というものを見た。
+    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
+    この書生というのは時々我々を捕えて煮て食うという話である。
+  </p>
+  <p>
+    吾輩は猫である。名前はまだ無い。
+    どこで生れたかとんと見当がつかぬ。
+    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+  </p>
+  <p>
+    吾輩はここで始めて人間というものを見た。
+    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
+    この書生というのは時々我々を捕えて煮て食うという話である。
+  </p>
+  <h2>見出し2</h2>
+  <p>
+    吾輩は猫である。名前はまだ無い。
+    どこで生れたかとんと見当がつかぬ。
+    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+  </p>
+  <p>
+    吾輩はここで始めて人間というものを見た。
+    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
+    この書生というのは時々我々を捕えて煮て食うという話である。
+  </p>
+
+
+  <!-- ============================================================
+       文章ナビゲーター
+  ============================================================ -->
+  <script>
+    (() => {
+      const UI_ID        = "__sub_ui__";
+      const SENTENCE_CLS = "__sub_sentence__";
+      const ACTIVE_CLS   = "__sub_active__";
+
+      const state = {
+        sentences: [],
+        currentIndex: -1,
+        ui: null,
+      };
+
+      /* ---------- テキストノードをスキップするか判定 ---------- */
+      function shouldSkip(node) {
+        if (!node?.nodeValue?.trim()) return true;
+        const p = node.parentElement;
+        if (!p) return true;
+        if (p.closest(`#${UI_ID}`)) return true;
+        if (p.closest(`.${SENTENCE_CLS}`)) return true;
+        if (p.closest("script,style,noscript,iframe,svg,canvas,textarea,input,button,select,option,code,pre")) return true;
+        if (p.isContentEditable || p.closest("[contenteditable]")) return true;
+        const cs = window.getComputedStyle(p);
+        if (cs.display === "none" || cs.visibility === "hidden") return true;
+        return false;
+      }
+
+      /* ---------- テキストを文単位に分割 ---------- */
+      function splitSentences(text) {
+        const lang = document.documentElement.lang || navigator.language || "ja";
+        if (window.Intl?.Segmenter) {
+          const seg = new Intl.Segmenter(lang, { granularity: "sentence" });
+          const pieces = [...seg.segment(text)].map(p => p.segment).filter(Boolean);
+          if (pieces.length) return pieces;
+        }
+        return text.match(/\s*[^。！？!?]+(?:[。！？!?]+|$)\s*/g) ?? [text];
+      }
+
+      /* ---------- テキストノードを <span> に置換 ---------- */
+      function wrapNode(node) {
+        const pieces = splitSentences(node.nodeValue);
+        if (!pieces.length) return [];
+
+        const frag = document.createDocumentFragment();
+        const created = [];
+
+        for (const piece of pieces) {
+          if (!piece) continue;
+          if (!piece.trim()) {
+            frag.appendChild(document.createTextNode(piece));
+            continue;
+          }
+          const span = document.createElement("span");
+          span.className = SENTENCE_CLS;
+          span.textContent = piece;
+          frag.appendChild(span);
+          created.push(span);
+        }
+
+        if (!created.length) return [];
+        node.parentNode.replaceChild(frag, node);
+        return created;
+      }
+
+      /* ---------- DOM 全体を走査してラップ ---------- */
+      function collectAndWrap() {
+        const walker = document.createTreeWalker(
+          document.body,
+          NodeFilter.SHOW_TEXT,
+          { acceptNode: n => shouldSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }
+        );
+        const nodes = [];
+        let n;
+        while ((n = walker.nextNode())) nodes.push(n);
+
+        const spans = nodes.flatMap(wrapNode);
+        spans.forEach((el, i) => { el.dataset.subIndex = i; });
+        return spans;
+      }
+
+      /* ---------- カウンター更新 ---------- */
+      function updateCounter() {
+        const el = state.ui?.querySelector(".__sub_counter__");
+        if (!el) return;
+        el.textContent = state.sentences.length
+          ? `${state.currentIndex + 1} / ${state.sentences.length}`
+          : "0 / 0";
+      }
+
+      /* ---------- フォーカス移動 ---------- */
+      function setCurrent(index, scroll = true) {
+        if (!state.sentences.length) return;
+        const next = Math.max(0, Math.min(index, state.sentences.length - 1));
+        state.sentences[state.currentIndex]?.classList.remove(ACTIVE_CLS);
+        state.currentIndex = next;
+        const target = state.sentences[next];
+        if (target) {
+          target.classList.add(ACTIVE_CLS);
+          if (scroll) target.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        updateCounter();
+      }
+
+      function move(delta) {
+        setCurrent((state.currentIndex < 0 ? 0 : state.currentIndex) + delta);
+      }
+
+      /* ---------- UI 構築 ---------- */
+      function buildUI() {
+        const ui = document.createElement("div");
+        ui.id = UI_ID;
+        ui.innerHTML = `
+          <button type="button" data-dir="-1">前へ</button>
+          <div class="__sub_counter__">0 / 0</div>
+          <button type="button" data-dir="1">次へ</button>
+        `;
+        ui.addEventListener("click", e => {
+          const btn = e.target.closest("button[data-dir]");
+          if (!btn) return;
+          e.preventDefault();
+          move(Number(btn.dataset.dir));
+        });
+        document.body.appendChild(ui);
+        return ui;
+      }
+
+      /* ---------- クリックで文を選択 ---------- */
+      function bindClicks() {
+        document.addEventListener("click", e => {
+          const s = e.target.closest(`.${SENTENCE_CLS}`);
+          if (!s || s.closest(`#${UI_ID}`)) return;
+          e.preventDefault();
+          setCurrent(Number(s.dataset.subIndex), false);
+        }, true);
+      }
+
+      /* ---------- キーボード操作 ---------- */
+      function bindKeys() {
+        document.addEventListener("keydown", e => {
+          const ae = document.activeElement;
+          if (ae?.tagName === "INPUT" || ae?.tagName === "TEXTAREA" || ae?.isContentEditable) return;
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
+          if (e.key === "ArrowLeft")  { e.preventDefault(); move(-1); }
+        });
+      }
+
+      /* ---------- 初期化 ---------- */
+      function init() {
+        state.sentences = collectAndWrap();
+        state.ui = buildUI();
+        bindClicks();
+        bindKeys();
+        if (state.sentences.length) setCurrent(0, false);
+        updateCounter();
+      }
+
+      // DOM 構築後に実行
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
+</body>
+</html>
