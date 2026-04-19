@@ -2,21 +2,48 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="robots" content="noindex, nofollow" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>サンプルページ</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Claude Codeってなに？エンジニアじゃなくてもわかる入門ガイド</title>
 
   <style>
-    /* ========== ページ本体のスタイル（自由に変更） ========== */
+    /* ========== ページ本体のスタイル ========== */
     body {
       max-width: 720px;
       margin: 0 auto;
       padding: 40px 24px 120px;
-      font: 18px/1.8 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font: 18px/1.9 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
       color: #222;
+      background: #fff;
+    }
+    h1 {
+      font-size: 1.7em;
+      line-height: 1.4;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      font-size: 1.2em;
+      margin-top: 2.4em;
+      margin-bottom: 0.5em;
+      padding-left: 0.7em;
+      border-left: 4px solid #555;
+    }
+    p  { margin: 0 0 1.2em; }
+    .lead {
+      font-size: 1.05em;
+      color: #555;
+      margin-bottom: 2em;
+    }
+    .note {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 1.6em 0;
+      font-size: 0.95em;
+      color: #444;
     }
 
-    /* ========== 文章ナビゲーター UI ========== */
+    /* ========== ナビゲーター UI ========== */
     #__sub_ui__ {
       position: fixed;
       bottom: 24px;
@@ -69,41 +96,108 @@
 </head>
 <body>
 
-  <!-- ============================================================
-       ここにページ本文を書く
-  ============================================================ -->
-  <h1>見出し</h1>
-  <h2>見出し2</h2>
+  <h1>Claude Codeってなに？<br>エンジニアじゃなくてもわかる入門ガイド</h1>
+  <p class="lead">「最近よく聞くけど、普通のClaudeと何が違うの？」そんな疑問にやさしく答えます。</p>
+
+  <h2>まず「Claude」おさらい</h2>
   <p>
-    吾輩は猫である。名前はまだ無い。
-    どこで生れたかとんと見当がつかぬ。
-    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+    Claudeは、アメリカの会社Anthropicが作ったAIアシスタントです。
+    ChatGPTと同じようなものだと思えばOKです。
+    チャット画面で質問を入力すると、文章を書いてくれたり、調べものを手伝ってくれたりします。
+    使ったことがある人も多いかもしれません。
   </p>
   <p>
-    吾輩はここで始めて人間というものを見た。
-    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
-    この書生というのは時々我々を捕えて煮て食うという話である。
+    でも、Claudeには「ちょっと待って、このコードをファイルに保存しておいて」と言っても、自分でパソコンを操作することはできません。
+    あくまで「答えを返してくれるチャットボット」です。
+    それに対して登場したのが、Claude Codeです。
+  </p>
+
+  <h2>Claude Codeはなにが違うの？</h2>
+  <p>
+    一言で言うと、Claude Codeは「自分でパソコンを操作しながら作業してくれるAI」です。
+    ふつうのClaudeが「アドバイスをくれる先生」だとすれば、Claude Codeは「一緒に手を動かしてくれるアシスタント」です。
   </p>
   <p>
-    吾輩は猫である。名前はまだ無い。
-    どこで生れたかとんと見当がつかぬ。
-    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+    たとえば「ログイン画面を作って」と伝えると、Claude Codeは自分でファイルを開き、コードを書き、動くかどうか確認して、もし問題があれば直す、という一連の作業を自分でやってくれます。
+    人間がやっていた「コードを書く→保存する→動かしてみる→バグを直す」という繰り返しを、AIが自律的にこなしてくれるわけです。
+  </p>
+
+  <div class="note">
+    💡 <strong>ポイント：「エージェント型AI」という考え方</strong><br>
+    人間から指示を受けて、自分で考えながら作業を進めるAIのことを「エージェント型AI」と呼びます。
+    Claude Codeはその代表的な例で、複数のファイルをまたいで作業したり、テストを実行したりといった複雑な仕事をひとりでこなします。
+  </div>
+
+  <h2>具体的に何ができるの？</h2>
+  <p>
+    Claude Codeができることを、わかりやすい例でいくつか紹介します。
   </p>
   <p>
-    吾輩はここで始めて人間というものを見た。
-    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
-    この書生というのは時々我々を捕えて煮て食うという話である。
-  </p>
-  <h2>見出し2</h2>
-  <p>
-    吾輩は猫である。名前はまだ無い。
-    どこで生れたかとんと見当がつかぬ。
-    何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。
+    まず、コードを書いてくれます。
+    「お問い合わせフォームを作って」「商品一覧ページを追加して」と伝えるだけで、関係するファイルをすべて読み込んで、必要なコードを自分で書いてくれます。
+    一部分だけじゃなく、関係するファイルをまとめて直してくれるのが便利なポイントです。
   </p>
   <p>
-    吾輩はここで始めて人間というものを見た。
-    しかもあとで聞くとそれは書生という人間中で一番獰悪な種族であったそうだ。
-    この書生というのは時々我々を捕えて煮て食うという話である。
+    次に、バグを直してくれます。
+    「こんなエラーが出た」と伝えると、コード全体を調べて原因を探し、修正まで自動でやってくれます。
+    エラーの内容をコピーして貼り付けるだけでOKです。
+  </p>
+  <p>
+    それから、コードの説明もしてくれます。
+    「このファイル、何をしているの？」と聞くと、難しい技術的な内容をわかりやすい言葉で説明してくれます。
+    新しくチームに加わった人が「このプロジェクトってどういう構造なの？」と確認するときにも役立ちます。
+  </p>
+
+  <h2>どこで使えるの？</h2>
+  <p>
+    Claude Codeはいろいろな場所から使えます。
+    もともとはエンジニアが使う「ターミナル」という黒い画面でのみ動くツールでしたが、今はずいぶん使いやすくなりました。
+  </p>
+  <p>
+    ブラウザから使えるウェブ版（claude.ai/code）では、インストールなしで今すぐ始めることができます。
+    Visual Studio CodeやJetBrainsといった開発に使うアプリに組み込んで使う方法もあります。
+    デスクトップアプリ版もあって、スマホやタブレットから作業の続きを確認する機能もあります。
+  </p>
+
+  <h2>ふつうのClaudeとの違いをまとめると</h2>
+  <p>
+    ふつうのClaudeは、質問に答えてくれる「会話するAI」です。
+    コードも書けますが、実際にファイルを操作したり保存したりすることはできません。
+    自分でコピーして貼り付ける必要があります。
+  </p>
+  <p>
+    それに対してClaude Codeは、作業そのものをやってくれる「動くAI」です。
+    ゴールだけ伝えれば、ファイルの読み書き、プログラムの実行、確認、修正まで自分でやりきってくれます。
+    以前なら数日かかっていた作業が数時間で終わることも、もはやめずらしくないそうです。
+  </p>
+
+  <h2>使うには料金がかかるの？</h2>
+  <p>
+    2026年4月時点では、Claude Codeを使うためにはClaudeの有料プランへの加入が必要です。
+    無料プランでは利用できません。
+    料金プランによって1日に使える量が変わるので、たくさん使いたい場合は上位のプランが向いています。
+  </p>
+  <p>
+    ただし、料金はAIツール全体で見ると高すぎるわけではなく、作業効率の向上を考えると元が取れると感じている人も多いようです。
+  </p>
+
+  <h2>エンジニアじゃないと使えないの？</h2>
+  <p>
+    以前はターミナルという操作画面が必要で、エンジニア向けのツールというイメージが強かったです。
+    でも今は、ウェブブラウザから使えるようになったので、プログラミングの知識がなくてもとっかかりやすくなっています。
+  </p>
+  <p>
+    とはいえ、コードのことを全く知らないと、指示の出し方に迷う場面も出てきます。
+    「何を作りたいか」を具体的に伝えられれば、Claude Codeがうまく動いてくれます。
+    まずはブラウザ版でちょっと試してみるのが一番の近道かもしれません。
+  </p>
+
+  <h2>まとめ</h2>
+  <p>
+    Claude Codeは、ただ答えを返すAIではなく、自分で考えて手を動かすAIです。
+    プログラムを書いて、動かして、直してを自律的に繰り返してくれるので、開発の速度が大きく変わります。
+    エンジニアの働き方を変えるツールとして、2025年に登場して以来、急速に広がっています。
+    「AIに作業を手伝ってもらう」から「AIと一緒に作る」へ、そんな時代に私たちはいるのかもしれません。
   </p>
 
 
@@ -122,7 +216,6 @@
         ui: null,
       };
 
-      /* ---------- テキストノードをスキップするか判定 ---------- */
       function shouldSkip(node) {
         if (!node?.nodeValue?.trim()) return true;
         const p = node.parentElement;
@@ -136,7 +229,6 @@
         return false;
       }
 
-      /* ---------- テキストを文単位に分割 ---------- */
       function splitSentences(text) {
         const lang = document.documentElement.lang || navigator.language || "ja";
         if (window.Intl?.Segmenter) {
@@ -147,14 +239,11 @@
         return text.match(/\s*[^。！？!?]+(?:[。！？!?]+|$)\s*/g) ?? [text];
       }
 
-      /* ---------- テキストノードを <span> に置換 ---------- */
       function wrapNode(node) {
         const pieces = splitSentences(node.nodeValue);
         if (!pieces.length) return [];
-
         const frag = document.createDocumentFragment();
         const created = [];
-
         for (const piece of pieces) {
           if (!piece) continue;
           if (!piece.trim()) {
@@ -167,13 +256,11 @@
           frag.appendChild(span);
           created.push(span);
         }
-
         if (!created.length) return [];
         node.parentNode.replaceChild(frag, node);
         return created;
       }
 
-      /* ---------- DOM 全体を走査してラップ ---------- */
       function collectAndWrap() {
         const walker = document.createTreeWalker(
           document.body,
@@ -183,13 +270,11 @@
         const nodes = [];
         let n;
         while ((n = walker.nextNode())) nodes.push(n);
-
         const spans = nodes.flatMap(wrapNode);
         spans.forEach((el, i) => { el.dataset.subIndex = i; });
         return spans;
       }
 
-      /* ---------- カウンター更新 ---------- */
       function updateCounter() {
         const el = state.ui?.querySelector(".__sub_counter__");
         if (!el) return;
@@ -198,7 +283,6 @@
           : "0 / 0";
       }
 
-      /* ---------- フォーカス移動 ---------- */
       function setCurrent(index, scroll = true) {
         if (!state.sentences.length) return;
         const next = Math.max(0, Math.min(index, state.sentences.length - 1));
@@ -216,7 +300,6 @@
         setCurrent((state.currentIndex < 0 ? 0 : state.currentIndex) + delta);
       }
 
-      /* ---------- UI 構築 ---------- */
       function buildUI() {
         const ui = document.createElement("div");
         ui.id = UI_ID;
@@ -235,7 +318,6 @@
         return ui;
       }
 
-      /* ---------- クリックで文を選択 ---------- */
       function bindClicks() {
         document.addEventListener("click", e => {
           const s = e.target.closest(`.${SENTENCE_CLS}`);
@@ -245,7 +327,6 @@
         }, true);
       }
 
-      /* ---------- キーボード操作 ---------- */
       function bindKeys() {
         document.addEventListener("keydown", e => {
           const ae = document.activeElement;
@@ -256,7 +337,6 @@
         });
       }
 
-      /* ---------- 初期化 ---------- */
       function init() {
         state.sentences = collectAndWrap();
         state.ui = buildUI();
@@ -266,7 +346,6 @@
         updateCounter();
       }
 
-      // DOM 構築後に実行
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);
       } else {
