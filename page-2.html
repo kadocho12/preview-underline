@@ -24,6 +24,12 @@
       --toggle-bg: #e8e8e8;
       --toggle-fg: #222222;
 
+      --panel-bg:    #ffffff;
+      --panel-fg:    #222222;
+      --panel-sub:   #666666;
+      --panel-line:  #dddddd;
+      --panel-soft:  #f7f7f7;
+      --panel-error: #b42318;
     }
     [data-theme="dark"] {
       --bg:        #1a1a1a;
@@ -41,6 +47,12 @@
       --toggle-bg: #333333;
       --toggle-fg: #e8e8e8;
 
+      --panel-bg:    #242424;
+      --panel-fg:    #eeeeee;
+      --panel-sub:   #bbbbbb;
+      --panel-line:  #444444;
+      --panel-soft:  #2f2f2f;
+      --panel-error: #ffb4ab;
     }
 
     /* ========== ページ本体 ========== */
@@ -157,6 +169,95 @@
       background-size: 100% 100%;
       border-radius: .15em;
     }
+
+    /* ========== 用語解説パネル ========== */
+    #__term_panel__ {
+      position: fixed;
+      left: 16px;
+      bottom: 96px;
+      z-index: 2147483647;
+      width: min(480px, calc(100vw - 32px));
+      max-height: min(52vh, 520px);
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--panel-fg);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+      font: 14px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    #__term_panel__[hidden] { display: none; }
+    #__term_panel__ .__term_panel_head__ {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    #__term_panel__ .__term_panel_title__ {
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    #__term_panel__ .__term_panel_target__ {
+      color: var(--panel-sub);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+    #__term_panel__ .__term_panel_close__ {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border: 1px solid var(--panel-line);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--panel-fg);
+      cursor: pointer;
+      font: 18px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #__term_panel__ .__term_panel_close__:hover { opacity: .75; }
+    #__term_panel__ .__term_panel_status__,
+    #__term_panel__ .__term_panel_empty__ {
+      margin: 0;
+      color: var(--panel-sub);
+    }
+    #__term_panel__ .__term_panel_error__ {
+      margin: 0 0 12px;
+      color: var(--panel-error);
+    }
+    #__term_panel__ .__term_panel_terms__ {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+    #__term_panel__ .__term_panel_term__ {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+    #__term_panel__ .__term_panel_term__ dt {
+      margin: 0 0 4px;
+      font-weight: 700;
+    }
+    #__term_panel__ .__term_panel_term__ dd {
+      margin: 0;
+      color: var(--panel-sub);
+    }
+    #__term_panel__ .__term_panel_retry__ {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      background: var(--ui-bg);
+      color: var(--ui-fg);
+      font: inherit;
+    }
+    #__term_panel__ .__term_panel_retry__:hover { opacity: .9; }
 
   </style>
 </head>
@@ -414,16 +515,26 @@
     /* ========== 文章ナビゲーター ========== */
     (() => {
       const UI_ID        = "__sub_ui__";
+      const PANEL_ID     = "__term_panel__";
       const SENTENCE_CLS = "__sub_sentence__";
       const ACTIVE_CLS   = "__sub_active__";
+      const API_ENDPOINT = "/api/term-explanations";
 
-      const state = { sentences: [], currentIndex: -1, ui: null };
+      const state = {
+        sentences: [],
+        currentIndex: -1,
+        ui: null,
+        panel: null,
+        cache: new Map(),
+        abortController: null
+      };
 
       function shouldSkip(node) {
         if (!node?.nodeValue?.trim()) return true;
         const p = node.parentElement;
         if (!p) return true;
         if (p.closest(`#${UI_ID}`)) return true;
+        if (p.closest(`#${PANEL_ID}`)) return true;
         if (p.closest(`#__theme_toggle__`)) return true;
         if (p.closest(`.${SENTENCE_CLS}`)) return true;
         if (p.closest("script,style,noscript,iframe,svg,canvas,textarea,input,button,select,option,code,pre")) return true;
@@ -497,6 +608,7 @@
 
       function move(delta) {
         setCurrent((state.currentIndex < 0 ? 0 : state.currentIndex) + delta);
+        hideTermPanel();
       }
 
       function buildUI() {
@@ -517,12 +629,178 @@
         return ui;
       }
 
+      function buildTermPanel() {
+        const panel = document.createElement("div");
+        panel.id = PANEL_ID;
+        panel.hidden = true;
+        panel.setAttribute("role", "dialog");
+        panel.setAttribute("aria-live", "polite");
+
+        const head = document.createElement("div");
+        head.className = "__term_panel_head__";
+
+        const heading = document.createElement("div");
+        const title = document.createElement("div");
+        title.className = "__term_panel_title__";
+        title.textContent = "用語の解説";
+        const target = document.createElement("div");
+        target.className = "__term_panel_target__";
+        heading.append(title, target);
+
+        const close = document.createElement("button");
+        close.className = "__term_panel_close__";
+        close.type = "button";
+        close.setAttribute("aria-label", "用語解説を閉じる");
+        close.textContent = "×";
+        close.addEventListener("click", hideTermPanel);
+
+        head.append(heading, close);
+
+        const body = document.createElement("div");
+        body.className = "__term_panel_body__";
+
+        panel.append(head, body);
+        document.body.appendChild(panel);
+        return panel;
+      }
+
+      function showTermPanel(index, force = false) {
+        const sentence = state.sentences[index];
+        if (!sentence || !state.panel) return;
+
+        const selectedText = sentence.textContent.trim();
+        if (!selectedText) return;
+
+        state.panel.dataset.index = String(index);
+        state.panel.hidden = false;
+        setPanelTarget(selectedText);
+
+        if (!force && state.cache.has(index)) {
+          renderTermResult(state.cache.get(index));
+          return;
+        }
+
+        fetchTermExplanations(index, selectedText);
+      }
+
+      async function fetchTermExplanations(index, selectedText) {
+        state.abortController?.abort();
+        const controller = new AbortController();
+        state.abortController = controller;
+        renderTermLoading();
+
+        try {
+          const response = await fetch(API_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ selectedText }),
+            signal: controller.signal
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          const result = { terms: normalizeTerms(data?.terms) };
+          state.cache.set(index, result);
+
+          if (state.currentIndex === index) renderTermResult(result);
+        } catch (error) {
+          if (error.name === "AbortError") return;
+          renderTermError(index);
+        } finally {
+          if (state.abortController === controller) state.abortController = null;
+        }
+      }
+
+      function setPanelTarget(selectedText) {
+        const target = state.panel.querySelector(".__term_panel_target__");
+        target.textContent = selectedText.length > 72
+          ? `${selectedText.slice(0, 72)}...`
+          : selectedText;
+      }
+
+      function renderTermLoading() {
+        const body = getPanelBody();
+        body.replaceChildren(buildParagraph("__term_panel_status__", "用語を探しています..."));
+      }
+
+      function renderTermResult(result) {
+        const body = getPanelBody();
+        body.replaceChildren();
+
+        if (!result.terms.length) {
+          body.appendChild(buildParagraph("__term_panel_empty__", "解説が必要な専門用語は見つかりませんでした。"));
+          return;
+        }
+
+        const list = document.createElement("dl");
+        list.className = "__term_panel_terms__";
+        for (const item of result.terms) {
+          const group = document.createElement("div");
+          group.className = "__term_panel_term__";
+          const term = document.createElement("dt");
+          term.textContent = item.term;
+          const explanation = document.createElement("dd");
+          explanation.textContent = item.explanation;
+          group.append(term, explanation);
+          list.appendChild(group);
+        }
+        body.appendChild(list);
+      }
+
+      function renderTermError(index) {
+        const body = getPanelBody();
+        const message = buildParagraph("__term_panel_error__", "用語解説を取得できませんでした。もう一度お試しください。");
+        const retry = document.createElement("button");
+        retry.className = "__term_panel_retry__";
+        retry.type = "button";
+        retry.textContent = "再試行";
+        retry.addEventListener("click", () => showTermPanel(index, true), { once: true });
+        body.replaceChildren(message, retry);
+      }
+
+      function hideTermPanel() {
+        if (!state.panel) return;
+        state.panel.hidden = true;
+        state.abortController?.abort();
+        state.abortController = null;
+      }
+
+      function getPanelBody() {
+        return state.panel.querySelector(".__term_panel_body__");
+      }
+
+      function buildParagraph(className, text) {
+        const p = document.createElement("p");
+        p.className = className;
+        p.textContent = text;
+        return p;
+      }
+
+      function normalizeTerms(terms) {
+        if (!Array.isArray(terms)) return [];
+        return terms
+          .map(item => ({
+            term: typeof item?.term === "string" ? item.term.trim() : "",
+            explanation: typeof item?.explanation === "string" ? item.explanation.trim() : ""
+          }))
+          .filter(item => item.term && item.explanation);
+      }
+
       function bindClicks() {
         document.addEventListener("click", e => {
+          if (e.target.closest(`#${PANEL_ID}`)) return;
           const s = e.target.closest(`.${SENTENCE_CLS}`);
           if (!s || s.closest(`#${UI_ID}`)) return;
           e.preventDefault();
-          setCurrent(Number(s.dataset.subIndex), false);
+          const index = Number(s.dataset.subIndex);
+          const wasActive = s.classList.contains(ACTIVE_CLS);
+          setCurrent(index, false);
+          if (wasActive) {
+            showTermPanel(index);
+          } else {
+            hideTermPanel();
+          }
         }, true);
       }
 
@@ -539,6 +817,7 @@
       function init() {
         state.sentences = collectAndWrap();
         state.ui = buildUI();
+        state.panel = buildTermPanel();
         bindClicks();
         bindKeys();
         if (state.sentences.length) setCurrent(0, false);
