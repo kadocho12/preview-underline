@@ -23,6 +23,14 @@
 
       --toggle-bg: #e8e8e8;
       --toggle-fg: #222222;
+
+      --term-fg:    #7b2d12;
+      --term-bg:    rgba(255, 202, 121, .5);
+      --term-ring:  rgba(255, 146, 43, .45);
+      --popup-bg:   #ffffff;
+      --popup-fg:   #222222;
+      --popup-sub:  #666666;
+      --popup-line: #dddddd;
     }
     [data-theme="dark"] {
       --bg:        #1a1a1a;
@@ -39,6 +47,14 @@
 
       --toggle-bg: #333333;
       --toggle-fg: #e8e8e8;
+
+      --term-fg:    #ffd28f;
+      --term-bg:    rgba(255, 184, 77, .22);
+      --term-ring:  rgba(255, 184, 77, .5);
+      --popup-bg:   #242424;
+      --popup-fg:   #eeeeee;
+      --popup-sub:  #bbbbbb;
+      --popup-line: #444444;
     }
 
     /* ========== ページ本体 ========== */
@@ -155,6 +171,70 @@
       background-size: 100% 100%;
       border-radius: .15em;
     }
+
+    .__term__ {
+      border-radius: 4px;
+      color: inherit;
+      cursor: inherit;
+      text-decoration: inherit;
+      transition: background .15s, color .15s, box-shadow .15s;
+    }
+    .__sub_active__ .__term__ {
+      background: var(--term-bg);
+      color: var(--term-fg);
+      cursor: help;
+      padding: .02em .12em;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-decoration-thickness: .08em;
+      text-underline-offset: .18em;
+    }
+    .__sub_active__ .__term__:hover,
+    .__sub_active__ .__term__:focus-visible {
+      box-shadow: 0 0 0 3px var(--term-ring);
+      outline: none;
+    }
+    #__term_popup__ {
+      position: fixed;
+      z-index: 2147483647;
+      width: min(320px, calc(100vw - 32px));
+      padding: 14px 16px 16px;
+      border: 1px solid var(--popup-line);
+      border-radius: 8px;
+      background: var(--popup-bg);
+      color: var(--popup-fg);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+      font: 14px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+    }
+    #__term_popup__[hidden] { display: none; }
+    #__term_popup__ .__term_popup_head__ {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    #__term_popup__ .__term_popup_title__ {
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    #__term_popup__ .__term_popup_body__ {
+      color: var(--popup-sub);
+      margin: 0;
+    }
+    #__term_popup__ .__term_popup_close__ {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border: 1px solid var(--popup-line);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--popup-fg);
+      cursor: pointer;
+      font: 18px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #__term_popup__ .__term_popup_close__:hover { opacity: .75; }
   </style>
 </head>
 <body>
@@ -375,16 +455,32 @@
       const STORE  = "theme";
 
       // 初期テーマ：保存値 → OSの設定 → light の順で決定
-      const saved = localStorage.getItem(STORE);
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const saved = readTheme();
+      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
       const initial = saved ?? (prefersDark ? "dark" : "light");
       applyTheme(initial);
 
       btn.addEventListener("click", () => {
         const next = html.dataset.theme === "dark" ? "light" : "dark";
         applyTheme(next);
-        localStorage.setItem(STORE, next);
+        saveTheme(next);
       });
+
+      function readTheme() {
+        try {
+          return localStorage.getItem(STORE);
+        } catch {
+          return null;
+        }
+      }
+
+      function saveTheme(theme) {
+        try {
+          localStorage.setItem(STORE, theme);
+        } catch {
+          // file:// や埋め込みブラウザでは保存できない場合がある。
+        }
+      }
 
       function applyTheme(theme) {
         html.dataset.theme = theme;
@@ -395,16 +491,78 @@
     /* ========== 文章ナビゲーター ========== */
     (() => {
       const UI_ID        = "__sub_ui__";
+      const POPUP_ID     = "__term_popup__";
       const SENTENCE_CLS = "__sub_sentence__";
       const ACTIVE_CLS   = "__sub_active__";
+      const TERM_CLS     = "__term__";
 
-      const state = { sentences: [], currentIndex: -1, ui: null };
+      const TERMS = [
+        {
+          term: "Visual Studio Code",
+          description: "Microsoftが提供するコード編集アプリです。拡張機能を追加して、AI支援や各種開発ツールを同じ画面で使えます。"
+        },
+        {
+          term: "エージェント型AI",
+          description: "指示に答えるだけでなく、目的に向けて手順を考え、必要な操作や確認を進めるAIのことです。"
+        },
+        {
+          term: "AIアシスタント",
+          description: "質問への回答、文章作成、要約、作業の補助などを会話形式で手伝うAIツールです。"
+        },
+        {
+          term: "Claude Code",
+          description: "Anthropicが提供する、コードベースを読み書きしながら開発作業を進められるAIエージェントです。"
+        },
+        {
+          term: "コードベース",
+          description: "アプリやサービスを構成するソースコード、設定、テストなどをまとめた一式を指します。"
+        },
+        {
+          term: "ChatGPT",
+          description: "OpenAIが提供する会話型AIです。質問回答、文章作成、コード支援など幅広い用途で使われます。"
+        },
+        {
+          term: "Anthropic",
+          description: "Claudeシリーズを開発しているAI企業です。安全性を重視したAI開発で知られています。"
+        },
+        {
+          term: "JetBrains",
+          description: "IntelliJ IDEAやWebStormなど、開発者向けの統合開発環境を提供している企業です。"
+        },
+        {
+          term: "ターミナル",
+          description: "文字でコマンドを入力して、ファイル操作やプログラム実行を行うための画面です。"
+        },
+        {
+          term: "ブラウザ",
+          description: "WebページやWebアプリを表示して操作するためのアプリです。ChromeやSafariなどがあります。"
+        },
+        {
+          term: "ビルド",
+          description: "書いたコードを実行・配布できる形に変換し、問題がないか確認する工程です。"
+        },
+        {
+          term: "テスト",
+          description: "プログラムが期待どおりに動くかを確認する作業や、その確認用コードを指します。"
+        },
+        {
+          term: "Claude",
+          description: "Anthropicが提供する会話型AIです。文章作成、要約、相談、コード支援などに使えます。"
+        },
+        {
+          term: "AI",
+          description: "人工知能のことです。文章や画像の生成、分類、予測、作業補助などに使われます。"
+        }
+      ].sort((a, b) => b.term.length - a.term.length);
+
+      const state = { sentences: [], currentIndex: -1, ui: null, popup: null };
 
       function shouldSkip(node) {
         if (!node?.nodeValue?.trim()) return true;
         const p = node.parentElement;
         if (!p) return true;
         if (p.closest(`#${UI_ID}`)) return true;
+        if (p.closest(`#${POPUP_ID}`)) return true;
         if (p.closest(`#__theme_toggle__`)) return true;
         if (p.closest(`.${SENTENCE_CLS}`)) return true;
         if (p.closest("script,style,noscript,iframe,svg,canvas,textarea,input,button,select,option,code,pre")) return true;
@@ -456,6 +614,53 @@
         return spans;
       }
 
+      function matchTermAt(text, index) {
+        for (const item of TERMS) {
+          if (text.startsWith(item.term, index)) return item;
+        }
+        return null;
+      }
+
+      function enhanceTerms(sentence) {
+        const text = sentence.textContent;
+        const frag = document.createDocumentFragment();
+        let index = 0;
+        let plain = "";
+
+        function flushPlain() {
+          if (!plain) return;
+          frag.appendChild(document.createTextNode(plain));
+          plain = "";
+        }
+
+        while (index < text.length) {
+          const item = matchTermAt(text, index);
+          if (!item) {
+            plain += text[index];
+            index += 1;
+            continue;
+          }
+          flushPlain();
+          const term = document.createElement("span");
+          term.className = TERM_CLS;
+          term.role = "button";
+          term.tabIndex = 0;
+          term.textContent = item.term;
+          term.dataset.term = item.term;
+          term.dataset.description = item.description;
+          term.setAttribute("aria-label", `${item.term} の説明を表示`);
+          frag.appendChild(term);
+          index += item.term.length;
+        }
+
+        flushPlain();
+        sentence.replaceChildren(frag);
+      }
+
+      function enhanceAllTerms() {
+        state.sentences.forEach(enhanceTerms);
+      }
+
       function updateCounter() {
         const el = state.ui?.querySelector(".__sub_counter__");
         if (!el) return;
@@ -471,6 +676,7 @@
         const target = state.sentences[next];
         if (target) {
           target.classList.add(ACTIVE_CLS);
+          hidePopup();
           if (scroll) target.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         updateCounter();
@@ -498,20 +704,93 @@
         return ui;
       }
 
+      function buildPopup() {
+        const popup = document.createElement("div");
+        popup.id = POPUP_ID;
+        popup.hidden = true;
+        popup.setAttribute("role", "dialog");
+        popup.setAttribute("aria-live", "polite");
+        popup.innerHTML = `
+          <div class="__term_popup_head__">
+            <div class="__term_popup_title__"></div>
+            <button class="__term_popup_close__" type="button" aria-label="説明を閉じる">×</button>
+          </div>
+          <p class="__term_popup_body__"></p>
+        `;
+        popup.querySelector("button").addEventListener("click", hidePopup);
+        document.body.appendChild(popup);
+        return popup;
+      }
+
+      function positionPopup(source) {
+        if (!state.popup) return;
+        const gap = 10;
+        const rect = source.getBoundingClientRect();
+        const popupRect = state.popup.getBoundingClientRect();
+        const maxLeft = window.innerWidth - popupRect.width - 16;
+        const left = Math.max(16, Math.min(rect.left, maxLeft));
+        const below = rect.bottom + gap;
+        const above = rect.top - popupRect.height - gap;
+        const top = below + popupRect.height <= window.innerHeight - 16
+          ? below
+          : Math.max(16, above);
+        state.popup.style.left = `${left}px`;
+        state.popup.style.top = `${top}px`;
+      }
+
+      function showPopup(source) {
+        const sentence = source.closest(`.${SENTENCE_CLS}`);
+        if (!sentence) return;
+        const index = Number(sentence.dataset.subIndex);
+        if (index !== state.currentIndex) setCurrent(index, false);
+
+        state.popup.querySelector(".__term_popup_title__").textContent = source.dataset.term;
+        state.popup.querySelector(".__term_popup_body__").textContent = source.dataset.description;
+        state.popup.hidden = false;
+        positionPopup(source);
+      }
+
+      function hidePopup() {
+        if (!state.popup) return;
+        state.popup.hidden = true;
+      }
+
       function bindClicks() {
         document.addEventListener("click", e => {
+          const term = e.target.closest(`.${TERM_CLS}`);
+          if (term) {
+            e.preventDefault();
+            e.stopPropagation();
+            showPopup(term);
+            return;
+          }
           const s = e.target.closest(`.${SENTENCE_CLS}`);
           if (!s || s.closest(`#${UI_ID}`)) return;
           e.preventDefault();
           setCurrent(Number(s.dataset.subIndex), false);
         }, true);
+
+        document.addEventListener("click", e => {
+          if (e.target.closest(`#${POPUP_ID}`) || e.target.closest(`.${TERM_CLS}`)) return;
+          hidePopup();
+        });
       }
 
       function bindKeys() {
         document.addEventListener("keydown", e => {
+          const term = e.target.closest?.(`.${TERM_CLS}`);
+          if (term && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            showPopup(term);
+            return;
+          }
+          if (e.key === "Escape") {
+            hidePopup();
+            return;
+          }
           const ae = document.activeElement;
           if (ae?.tagName === "INPUT" || ae?.tagName === "TEXTAREA" || ae?.isContentEditable) return;
-          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          if (!e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
           if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
           if (e.key === "ArrowLeft")  { e.preventDefault(); move(-1); }
         });
@@ -519,7 +798,9 @@
 
       function init() {
         state.sentences = collectAndWrap();
+        enhanceAllTerms();
         state.ui = buildUI();
+        state.popup = buildPopup();
         bindClicks();
         bindKeys();
         if (state.sentences.length) setCurrent(0, false);
