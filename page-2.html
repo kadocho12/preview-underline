@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Claude Codeってなに？エンジニアじゃなくてもわかる入門ガイド</title>
+
+  <style>
+    /* ========== カラー変数 ========== */
+    :root {
+      --bg:        #ffffff;
+      --fg:        #222222;
+      --fg-sub:    #555555;
+      --border:    #555555;
+      --note-bg:   #f5f5f5;
+      --note-fg:   #444444;
+
+      --ui-bg:     rgba(20, 20, 20, 0.92);
+      --ui-fg:     #ffffff;
+      --ui-btn-bg: #ffffff;
+      --ui-btn-fg: #111111;
+
+      --toggle-bg: #e8e8e8;
+      --toggle-fg: #222222;
+
+      --panel-bg:    #ffffff;
+      --panel-fg:    #222222;
+      --panel-sub:   #666666;
+      --panel-line:  #dddddd;
+      --panel-soft:  #f7f7f7;
+      --panel-error: #b42318;
+    }
+    [data-theme="dark"] {
+      --bg:        #1a1a1a;
+      --fg:        #e8e8e8;
+      --fg-sub:    #aaaaaa;
+      --border:    #888888;
+      --note-bg:   #2a2a2a;
+      --note-fg:   #cccccc;
+
+      --ui-bg:     rgba(240, 240, 240, 0.92);
+      --ui-fg:     #111111;
+      --ui-btn-bg: #111111;
+      --ui-btn-fg: #ffffff;
+
+      --toggle-bg: #333333;
+      --toggle-fg: #e8e8e8;
+
+      --panel-bg:    #242424;
+      --panel-fg:    #eeeeee;
+      --panel-sub:   #bbbbbb;
+      --panel-line:  #444444;
+      --panel-soft:  #2f2f2f;
+      --panel-error: #ffb4ab;
+    }
+
+    /* ========== ページ本体 ========== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      background: var(--bg);
+      transition: background 0.2s, color 0.2s;
+    }
+    body {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 120px;
+      font: 18px/1.9 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      transition: background 0.2s, color 0.2s;
+    }
+    h1 {
+      font-size: 1.7em;
+      line-height: 1.4;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      font-size: 1.2em;
+      margin-top: 2.4em;
+      margin-bottom: 0.5em;
+      padding-left: 0.7em;
+      border-left: 4px solid var(--border);
+    }
+    p { margin: 0 0 1.2em; }
+    .lead {
+      font-size: 1.05em;
+      color: var(--fg-sub);
+      margin-bottom: 2em;
+    }
+    .note {
+      background: var(--note-bg);
+      color: var(--note-fg);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 1.6em 0;
+      font-size: 0.95em;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* ========== ダークモード切り替えボタン ========== */
+    #__theme_toggle__ {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2147483647;
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      background: var(--toggle-bg);
+      color: var(--toggle-fg);
+      font: 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      transition: background 0.2s, color 0.2s;
+    }
+    #__theme_toggle__:hover { opacity: .85; }
+
+    /* ========== 文章ナビゲーター UI ========== */
+    #__sub_ui__ {
+      position: fixed;
+      bottom: 24px;
+      right: 16px;
+      z-index: 2147483647;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--ui-bg);
+      color: var(--ui-fg);
+      border-radius: 12px;
+      font: 14px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+      transition: background 0.2s, color 0.2s;
+    }
+    #__sub_ui__ button {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: var(--ui-btn-bg);
+      color: var(--ui-btn-fg);
+      font: inherit;
+      transition: background 0.2s, color 0.2s;
+    }
+    #__sub_ui__ button:hover { opacity: .9; }
+    #__sub_ui__ .__sub_counter__ {
+      min-width: 72px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ========== 文ハイライト ========== */
+    .__sub_sentence__ { cursor: pointer; }
+    .__sub_sentence__.__sub_active__ {
+      text-decoration-line: underline;
+      text-decoration-thickness: 0.22em;
+      text-underline-offset: 0.18em;
+      text-decoration-color: #ff5a5f;
+      background-image: linear-gradient(
+        to top,
+        rgba(255, 90, 95, .14),
+        rgba(255, 90, 95, .14)
+      );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      border-radius: .15em;
+    }
+
+    /* ========== 用語解説パネル ========== */
+    #__term_panel__ {
+      position: fixed;
+      left: 16px;
+      bottom: 96px;
+      z-index: 2147483647;
+      width: min(480px, calc(100vw - 32px));
+      max-height: min(52vh, 520px);
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--panel-fg);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+      font: 14px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    #__term_panel__[hidden] { display: none; }
+    #__term_panel__ .__term_panel_head__ {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    #__term_panel__ .__term_panel_title__ {
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    #__term_panel__ .__term_panel_target__ {
+      color: var(--panel-sub);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+    #__term_panel__ .__term_panel_close__ {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border: 1px solid var(--panel-line);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--panel-fg);
+      cursor: pointer;
+      font: 18px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #__term_panel__ .__term_panel_close__:hover { opacity: .75; }
+    #__term_panel__ .__term_panel_status__,
+    #__term_panel__ .__term_panel_empty__ {
+      margin: 0;
+      color: var(--panel-sub);
+    }
+    #__term_panel__ .__term_panel_error__ {
+      margin: 0 0 12px;
+      color: var(--panel-error);
+    }
+    #__term_panel__ .__term_panel_terms__ {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+    }
+    #__term_panel__ .__term_panel_term__ {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+    #__term_panel__ .__term_panel_term__ dt {
+      margin: 0 0 4px;
+      font-weight: 700;
+    }
+    #__term_panel__ .__term_panel_term__ dd {
+      margin: 0;
+      color: var(--panel-sub);
+    }
+    #__term_panel__ .__term_panel_retry__ {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      background: var(--ui-bg);
+      color: var(--ui-fg);
+      font: inherit;
+    }
+    #__term_panel__ .__term_panel_retry__:hover { opacity: .9; }
+
+  </style>
+</head>
+<body>
+
+  <!-- ダークモード切り替えボタン -->
+  <button id="__theme_toggle__" type="button" aria-label="ダークモード切り替え">🌙 ダーク</button>
+
+  <main id="__content__">
+    <p class="keyboard-hint">キーボードを使用する場合は、Shift+左右矢印キーでも下線を移動できます。</p>
+    <h1>Claude Codeってなに？<br>エンジニアじゃなくてもわかる入門ガイド</h1>
+    <p class="lead">「最近よく聞くけど、普通のClaudeと何が違うの？」そんな疑問にやさしく答えます。</p>
+
+    <h2>まず「Claude」おさらい</h2>
+    <p>
+      Claudeは、アメリカの会社Anthropicが作ったAIアシスタントです。
+      人と会話するように質問へ答えてくれて、文章づくりや調べものも手伝ってくれるので、仕事の相談相手としても日常のちょっとした疑問を整理する相手としても使えます。
+      曖昧な相談を投げても、会話しながら考えを形にしてくれます。
+      最初からきれいな質問を用意しなくても大丈夫です。
+      途中で言い換えたり条件を足したりしながら、答えも少しずつ調整できます。
+    </p>
+    <p>
+      ChatGPTと同じようなものだと思えばOKです。
+      Claudeは長文を読ませて要点を整理する場面でもよく使われていて、やわらかい文章表現を考えるときや、資料や議事録のように読むのに時間がかかるものを扱うときにも便利で、情報量が多すぎてどこから読めばよいか分からないときにも助けになります。
+    </p>
+    <p>
+      チャット画面で質問を入力すると、メールの下書き、企画の整理、長い文章の要約、ちょっとしたアイデア出しまで、こちらの目的に合わせて返事を作ってくれます。
+      パソコンの中にいる相談役のような感覚です。
+      ひとりで考えていると、作業が止まることがあります。
+      Claudeは、その作業を前に進めるきっかけにもなり、考えを外に出す相手としても役に立ちます。
+      まだ触ったことがない人でも、検索窓に言葉を入れるような感覚で話しかければ、だいたいの雰囲気はすぐにつかめます。
+      質問を重ねるほど、自分の考えも整理されていきます。
+    </p>
+    <p>
+      でも、Claudeにはできないこともあります。
+      「このコードをファイルに保存しておいて」と言っても、自分でパソコンを操作することはできません。
+      返ってきたコードや説明をどう扱うかは基本的に使っている人が判断するため、実際の作業環境に反映するところまでは面倒を見てくれず、あくまで「答えを返してくれるチャットボット」として振る舞います。
+      画面の外にあるファイルを開く作業や保存する作業、実際にプログラムを動かして確認する作業は人間側に残ります。
+      そこにはまだひと手間があり、コピー漏れが起きたり、貼り付ける場所を間違えたりすることもあります。
+      作業が長くなるほど、その負担は積み重なります。
+      それに対して登場したのがClaude Codeです。
+      チャットで答えをもらうだけでは足りなかった部分を補い、実際のファイル操作や確認作業まで任せられるようにしたもの、と考えると分かりやすいです。
+    </p>
+
+    <h2>Claude Codeはなにが違うの？</h2>
+    <p>
+      一言で言うと、Claude Codeは「自分でパソコンを操作しながら作業してくれるAI」です。
+      会話で相談するだけではなく、プロジェクトの中にあるファイルを読み、必要な場所を書き換え、コマンドを実行し、結果を確かめます。
+      そのため、説明を聞いたあとに自分で同じ手順をなぞる必要がかなり減ります。
+      ふつうのClaudeが「アドバイスをくれる先生」だとします。
+      Claude Codeは「一緒に手を動かしてくれるアシスタント」で、作業の途中で起きた問題も見ながら次の一手を考え、うまくいかなかった場合は別の修正方法を試すこともできます。
+      単なる回答ではなく、会話がそのまま実作業につながります。
+    </p>
+    <p>
+      たとえば「ログイン画面を作って」と伝えます。
+      Claude Codeは自分でファイルを開き、コードを書き、動くかどうか確認し、問題があれば直して、こうした一連の作業を進めてくれます。
+      利用者は、最初から細かいファイル名や修正箇所を全部指定しなくても作業を始められます。
+      途中で必要になった関連ファイルも、AI側が見つけて確認してくれます。
+      人間は「コードを書く→保存する→動かしてみる→バグを直す」という繰り返しをしていました。
+      その流れを、AIが自律的にこなしてくれるわけです。
+      利用者は細かい操作よりも、何を作りたいか、どこまでできればよいか、できあがったものが意図に合っているかといった判断に時間を使いやすくなります。
+      作業者というより、レビューする人に近い立場で関われます。
+    </p>
+
+    <div class="note">
+      💡 <strong>ポイント：「エージェント型AI」という考え方。</strong><br>
+      人間から指示を受けて、自分で考えながら作業を進めるAIのことを「エージェント型AI」と呼びます。
+      単に返事をするだけではなく、ゴールに向かって複数の手順を組み立て、必要な情報を確認し、結果を見ながら次の行動を選んで実行します。
+      目的地だけ伝えると、途中の道筋をある程度自分で作って進みます。
+      Claude Codeはその代表的な例で、複数のファイルをまたいで作業したり、テストを実行したり、失敗した結果を見て修正方針を変えたりします。
+      途中で分からないことがあればコードベースを読み直し、必要に応じて利用者へ確認を求めます。
+    </div>
+
+    <h2>具体的に何ができるの？</h2>
+    <p>
+      Claude Codeができることを、身近な作業に分けて見ていきます。
+      画面を作る、エラーを直す、既存のコードを理解する、という作業はどれも日常的な開発作業です。
+      実際に人がどこで手間を感じやすいのかも含めて紹介します。
+      ただ便利そう、という印象だけで終わらせません。
+      どの作業が置き換わるのか、どこは人間が確認すべきなのかも見えるようにします。
+    </p>
+    <p>
+      まず、コードを書いてくれます。
+      「お問い合わせフォームを作って」と伝えてもよいですし、「商品一覧ページを追加して」でも構いません。
+      関係するファイルを読み込み、画面に必要な部品や裏側の処理を判断しながら、入力欄、ボタン、保存処理、エラー表示などを含めたコードを書いてくれます。
+      作りたいものの完成形を言葉で伝えるだけでも、作業が始まります。
+      足りない条件は途中で確認しながら補えますし、一部分だけではありません。
+      関係するファイルをまとめて直してくれます。
+      画面だけ直したのに設定ファイルを忘れる、といった抜け漏れも減らしやすくなります。
+      複数の場所を同時に見なければならない作業ほど、効果が分かりやすいです。
+      変更の影響範囲を追う負担も軽くなります。
+    </p>
+    <p>
+      次に、バグを直してくれるので、こんなエラーが出たと伝えます。
+      すると、コード全体を調べて原因を探し、怪しい場所を順番に確認し、必要であれば実際にテストやビルドを動かして修正まで進めてくれることもあります。
+      エラー文を読んでも意味が分からない状態からでも、調査を始められます。
+      原因を探すために何時間も検索するような負担を減らせます。
+      エラーの内容をコピーして貼り付けるだけでOKです。
+      どのファイルが原因なのか分からない状態でも相談しやすいです。
+      慣れていない人でも最初の一歩を踏み出しやすくなります。
+      原因が複数ありそうなときも、順番に切り分けてくれます。
+    </p>
+    <p>
+      それから、コードの説明もしてくれるので、このファイルは何をしているのかと聞けます。
+      難しい技術的な内容を、わかりやすい言葉で説明してくれます。
+      どのファイルがどんな役割を持っているのか、データがどこから来てどこへ渡されるのか、全体の流れも合わせて整理してくれます。
+      コードの読み始めで迷子になりにくくなります。
+      新しくチームに加わった人にも役立ち、このプロジェクトはどういう構造なのかと確認するときに便利です。
+      いきなり全部のコードを読むよりも早く全体像をつかめるので、引き継ぎやレビュー前の理解にも向いていて、質問しづらい初歩的な内容も気軽に確認できます。
+    </p>
+
+    <h2>どこで使えるの？</h2>
+    <p>
+      Claude Codeはいろいろな場所から使えます。
+      もともとはエンジニアがよく使う「ターミナル」という黒い画面で動くツールでしたが、今はブラウザや開発用アプリからも使えるようになりました。
+      コマンド操作に慣れていない人でも、入口を見つけやすくなっています。
+      以前よりずいぶん触りやすくなり、技術に詳しい人だけの道具、という印象も少しずつ薄れています。
+    </p>
+    <p>
+      ブラウザから使えるウェブ版（<a href="https://claude.ai/code">claude.ai/code</a>）があり、インストールなしで始められます。
+      まず雰囲気を試したい人でも入り口を見つけやすいです。
+      手元の環境を大きく変えずに「AIが作業する」とはどういうことかを体験できるので、いきなり本格的な開発環境を用意する必要はなく、試してから本格利用を考えられます。
+      Visual Studio CodeやJetBrainsといった開発用アプリに組み込む方法もあります。
+      普段コードを書いている画面の中でそのまま相談しながら作業を進められるため、別の画面に移動して説明をコピーする手間も少なくなり、AIとのやりとりが作業の流れに自然に入り込み、集中が途切れにくくなります。
+      デスクトップアプリ版もあり、スマホやタブレットから作業の続きを確認する機能もあるため、机の前にいない時間でも進み具合を追いやすく、移動中に結果だけ確認して次の指示を考えるような使い方もできます。
+      まとまった時間が取りにくい人にも向いています。
+    </p>
+
+    <h2>ふつうのClaudeとの違いをまとめると</h2>
+    <p>
+      ふつうのClaudeは、質問に答えてくれる「会話するAI」です。
+      文章の相談に向いていて、コードの書き方を説明してもらうこともできる、考えるための材料を返してくれる存在です。
+      使う人は、その答えを読んで次の行動を決めます。
+      知識を得る場面で力を発揮し、考えを整理する場面にも向いていて、コードも書けます。
+      ただし、実際にファイルを操作したり保存したりすることはできません。
+      出てきたコードをどこに貼るか、どう動かすか、既存のコードとぶつからないかは、人間が判断する必要があります。
+      ある程度の開発経験がないと、そこで止まってしまうこともあります。
+      自分でコピーして貼り付ける必要があり、貼り付けた後にエラーが出た場合も、どこを直すかは自分で確認しなければなりません。
+      AIが答えてくれても、最後の作業は人間側に残ります。
+      慣れていない人ほど、その最後のひと手間が大きな壁になります。
+    </p>
+    <p>
+      それに対してClaude Codeは、作業そのものをやってくれる「動くAI」です。
+      相談相手というより、同じ作業場に入って一緒に手を動かす相手に近いです。
+      説明を聞くだけで終わらず、実際のファイル変更まで進められるので、アイデアを動く形にするまでの距離が短くなり、試行錯誤の速度も上がります。
+      ゴールだけ伝えれば、ファイルの読み書き、プログラムの実行、確認、修正まで自分で進めてくれます。
+      細かい手順をすべて指示しなくても、作業が前に進みます。
+      途中で発生した小さな調整も任せやすくなり、人間は方向性や品質の確認に時間を使いやすくなります。
+      以前なら数日かかっていた作業が、数時間で終わることもめずらしくないそうです。
+      特に、既存のコードを読みながら少しずつ直していく作業では差が出やすいです。
+      調査と修正を何度も往復する負担が軽くなります。
+    </p>
+
+    <h2>使うには料金がかかるの？</h2>
+    <p>
+      2026年4月時点では、Claude Codeを使うためにはClaudeの有料プランへの加入が必要で、無料プランでは利用できません。
+      無料のチャット機能を試す感覚とは少し違います。
+      継続的に作業を任せるための道具として考えるほうが近いです。
+      単発の質問よりも、日々の作業時間を短くする投資として見るほうが実態に合っています。
+      料金プランによって、1日に使える量が変わります。
+      たくさん使いたい場合は上位のプランが向いています。
+      仕事の中で何度も依頼したい場合も同じです。
+      どれくらいの頻度で作業を頼むか、どれくらい長い作業を任せたいか、途中で何度も相談しながら進めたいかによって選び方も変わります。
+    </p>
+    <p>
+      ただし、料金はAIツール全体で見ると高すぎるわけではありません。
+      作業効率は上がり、調べながら手を動かす時間も短くなり、自分では後回しにしがちな小さな修正まで進めやすくなります。
+      そう考えると、元が取れると感じている人も多いようです。
+      特に、開発作業が毎日のように発生する人には効果を実感しやすいはずです。
+    </p>
+
+    <h2>エンジニアじゃないと使えないの？</h2>
+    <p>
+      以前はターミナルという操作画面が必要で、コマンドを打つことに慣れていない人には少し近寄りにくく、間違った操作をしたらどうしようという不安もありました。
+      エンジニア向けのツールというイメージも強かったです。
+      興味があっても、最初の画面で止まってしまう人が多かったと思います。
+      でも今は、ウェブブラウザから使えるようになりました。
+      プログラミングの知識がなくても、まずは画面を見ながら頼みごとをしてみるところから始めやすくなっていて、専門的な環境構築をしなくても入口に立てます。
+      試すだけなら、心理的な負担はかなり下がっています。
+    </p>
+    <p>
+      とはいえ、コードのことを全く知らないと迷う場面もあります。
+      何をどこまで頼めばよいのか分からないことがあり、指示の出し方に悩むこともあります。
+      最初は「この画面にボタンを追加したい」のように伝えると進めやすいです。
+      「文章を保存できるようにしたい」でも十分です。
+      見た目や目的から伝えれば、実装方法を知らなくても会話の中で形にしていけます。
+      「何を作りたいか」を具体的に伝えられればClaude Codeがうまく動いてくれるので、最初から専門用語を完璧に知っている必要はなく、分からない言葉が出てきたらその場で説明してもらいながら、少しずつコードの考え方に慣れていくこともできます。
+      まずはブラウザ版でちょっと試してみるのが近道です。
+      どんな頼み方をすると動いてくれるのかを体験するだけでも十分です。
+      最初は失敗してもよい小さな題材を選ぶと、感覚をつかみやすくなります。
+      いきなり大事な本番作業を任せるよりも安心です。
+    </p>
+
+    <h2>まとめ</h2>
+    <p>
+      Claude Codeは、ただ答えを返すAIではなく、自分で考えて手を動かすAIです。
+      これまで人間が画面を行き来しながら進めていた作業のかなりの部分を任せられます。
+      AIとの関わり方そのものが少し変わってきていて、相談する相手から一緒に作業する相手へ近づき、作業の主導権の持ち方も変わってきますが、最終的に何をよしとするかは人間が見て決める必要があります。
+      プログラムを書き、動かし、直すという流れを自律的に繰り返してくれます。
+      開発の速度は大きく変わり、試しに作ってみるまでのハードルも下がります。
+      まだ形になっていないアイデアを、小さく動くものにするまでの距離も短くなります。
+      試作や検証の回数を増やしやすくなります。
+      エンジニアの働き方を変えるツールとして、2025年に登場して以来、個人の学習から会社の開発現場まで急速に広がっています。
+      今後は、エンジニア以外の人が開発に関わる入口としても使われる場面が増えていきそうです。
+      作る人と依頼する人の境界も、少しずつ変わっていくかもしれません。
+      「AIに作業を手伝ってもらう」から「AIと一緒に作る」へ。
+      そんな時代に私たちはいるのかもしれません。
+      これからは、AIに何を任せるのか、人間がどこを判断するのかを考えることが、ものづくりの大事な力になっていきそうです。
+      道具を使うというより、共同作業の進め方を設計する感覚に近づいていきます。
+    </p>
+  </main>
+
+
+  <script>
+    /* ========== ダークモード切り替え ========== */
+    (() => {
+      const html   = document.documentElement;
+      const btn    = document.getElementById("__theme_toggle__");
+      const STORE  = "theme";
+
+      // 初期テーマ：保存値 → OSの設定 → light の順で決定
+      const saved = readTheme();
+      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
+      const initial = saved ?? (prefersDark ? "dark" : "light");
+      applyTheme(initial);
+
+      btn.addEventListener("click", () => {
+        const next = html.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(next);
+        saveTheme(next);
+      });
+
+      function readTheme() {
+        try {
+          return localStorage.getItem(STORE);
+        } catch {
+          return null;
+        }
+      }
+
+      function saveTheme(theme) {
+        try {
+          localStorage.setItem(STORE, theme);
+        } catch {
+          // file:// や埋め込みブラウザでは保存できない場合がある。
+        }
+      }
+
+      function applyTheme(theme) {
+        html.dataset.theme = theme;
+        btn.textContent = theme === "dark" ? "☀️ ライト" : "🌙 ダーク";
+      }
+    })();
+
+    /* ========== 文章ナビゲーター ========== */
+    (() => {
+      const UI_ID        = "__sub_ui__";
+      const PANEL_ID     = "__term_panel__";
+      const SENTENCE_CLS = "__sub_sentence__";
+      const ACTIVE_CLS   = "__sub_active__";
+      const API_ENDPOINT = "/api/term-explanations";
+
+      const state = {
+        sentences: [],
+        currentIndex: -1,
+        ui: null,
+        panel: null,
+        cache: new Map(),
+        abortController: null
+      };
+
+      function shouldSkip(node) {
+        if (!node?.nodeValue?.trim()) return true;
+        const p = node.parentElement;
+        if (!p) return true;
+        if (p.closest(`#${UI_ID}`)) return true;
+        if (p.closest(`#${PANEL_ID}`)) return true;
+        if (p.closest(`#__theme_toggle__`)) return true;
+        if (p.closest(`.${SENTENCE_CLS}`)) return true;
+        if (p.closest("script,style,noscript,iframe,svg,canvas,textarea,input,button,select,option,code,pre")) return true;
+        if (p.isContentEditable || p.closest("[contenteditable]")) return true;
+        const cs = window.getComputedStyle(p);
+        if (cs.display === "none" || cs.visibility === "hidden") return true;
+        return false;
+      }
+
+      function splitSentences(text) {
+        const lang = document.documentElement.lang || navigator.language || "ja";
+        if (window.Intl?.Segmenter) {
+          const seg = new Intl.Segmenter(lang, { granularity: "sentence" });
+          const pieces = [...seg.segment(text)].map(p => p.segment).filter(Boolean);
+          if (pieces.length) return pieces;
+        }
+        return text.match(/\s*[^。！？!?]+(?:[。！？!?]+|$)\s*/g) ?? [text];
+      }
+
+      function wrapNode(node) {
+        const pieces = splitSentences(node.nodeValue);
+        if (!pieces.length) return [];
+        const frag = document.createDocumentFragment();
+        const created = [];
+        for (const piece of pieces) {
+          if (!piece) continue;
+          if (!piece.trim()) { frag.appendChild(document.createTextNode(piece)); continue; }
+          const span = document.createElement("span");
+          span.className = SENTENCE_CLS;
+          span.textContent = piece;
+          frag.appendChild(span);
+          created.push(span);
+        }
+        if (!created.length) return [];
+        node.parentNode.replaceChild(frag, node);
+        return created;
+      }
+
+      function collectAndWrap() {
+        const walker = document.createTreeWalker(
+          document.body, NodeFilter.SHOW_TEXT,
+          { acceptNode: n => shouldSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }
+        );
+        const nodes = [];
+        let n;
+        while ((n = walker.nextNode())) nodes.push(n);
+        const spans = nodes.flatMap(wrapNode);
+        spans.forEach((el, i) => { el.dataset.subIndex = i; });
+        return spans;
+      }
+
+      function updateCounter() {
+        const el = state.ui?.querySelector(".__sub_counter__");
+        if (!el) return;
+        el.textContent = state.sentences.length
+          ? `${state.currentIndex + 1} / ${state.sentences.length}` : "0 / 0";
+      }
+
+      function setCurrent(index, scroll = true) {
+        if (!state.sentences.length) return;
+        const next = Math.max(0, Math.min(index, state.sentences.length - 1));
+        state.sentences[state.currentIndex]?.classList.remove(ACTIVE_CLS);
+        state.currentIndex = next;
+        const target = state.sentences[next];
+        if (target) {
+          target.classList.add(ACTIVE_CLS);
+          if (scroll) target.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        updateCounter();
+      }
+
+      function move(delta) {
+        setCurrent((state.currentIndex < 0 ? 0 : state.currentIndex) + delta);
+        hideTermPanel();
+      }
+
+      function buildUI() {
+        const ui = document.createElement("div");
+        ui.id = UI_ID;
+        ui.innerHTML = `
+          <button type="button" data-dir="-1">前へ</button>
+          <div class="__sub_counter__">0 / 0</div>
+          <button type="button" data-dir="1">次へ</button>
+        `;
+        ui.addEventListener("click", e => {
+          const btn = e.target.closest("button[data-dir]");
+          if (!btn) return;
+          e.preventDefault();
+          move(Number(btn.dataset.dir));
+        });
+        document.body.appendChild(ui);
+        return ui;
+      }
+
+      function buildTermPanel() {
+        const panel = document.createElement("div");
+        panel.id = PANEL_ID;
+        panel.hidden = true;
+        panel.setAttribute("role", "dialog");
+        panel.setAttribute("aria-live", "polite");
+
+        const head = document.createElement("div");
+        head.className = "__term_panel_head__";
+
+        const heading = document.createElement("div");
+        const title = document.createElement("div");
+        title.className = "__term_panel_title__";
+        title.textContent = "用語の解説";
+        const target = document.createElement("div");
+        target.className = "__term_panel_target__";
+        heading.append(title, target);
+
+        const close = document.createElement("button");
+        close.className = "__term_panel_close__";
+        close.type = "button";
+        close.setAttribute("aria-label", "用語解説を閉じる");
+        close.textContent = "×";
+        close.addEventListener("click", hideTermPanel);
+
+        head.append(heading, close);
+
+        const body = document.createElement("div");
+        body.className = "__term_panel_body__";
+
+        panel.append(head, body);
+        document.body.appendChild(panel);
+        return panel;
+      }
+
+      function showTermPanel(index, force = false) {
+        const sentence = state.sentences[index];
+        if (!sentence || !state.panel) return;
+
+        const selectedText = sentence.textContent.trim();
+        if (!selectedText) return;
+
+        state.panel.dataset.index = String(index);
+        state.panel.hidden = false;
+        setPanelTarget(selectedText);
+
+        if (!force && state.cache.has(index)) {
+          renderTermResult(state.cache.get(index));
+          return;
+        }
+
+        fetchTermExplanations(index, selectedText);
+      }
+
+      async function fetchTermExplanations(index, selectedText) {
+        state.abortController?.abort();
+        const controller = new AbortController();
+        state.abortController = controller;
+        renderTermLoading();
+
+        try {
+          const response = await fetch(API_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ selectedText }),
+            signal: controller.signal
+          });
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = await response.json();
+          const result = { terms: normalizeTerms(data?.terms) };
+          state.cache.set(index, result);
+
+          if (state.currentIndex === index) renderTermResult(result);
+        } catch (error) {
+          if (error.name === "AbortError") return;
+          renderTermError(index);
+        } finally {
+          if (state.abortController === controller) state.abortController = null;
+        }
+      }
+
+      function setPanelTarget(selectedText) {
+        const target = state.panel.querySelector(".__term_panel_target__");
+        target.textContent = selectedText.length > 72
+          ? `${selectedText.slice(0, 72)}...`
+          : selectedText;
+      }
+
+      function renderTermLoading() {
+        const body = getPanelBody();
+        body.replaceChildren(buildParagraph("__term_panel_status__", "用語を探しています..."));
+      }
+
+      function renderTermResult(result) {
+        const body = getPanelBody();
+        body.replaceChildren();
+
+        if (!result.terms.length) {
+          body.appendChild(buildParagraph("__term_panel_empty__", "解説が必要な専門用語は見つかりませんでした。"));
+          return;
+        }
+
+        const list = document.createElement("dl");
+        list.className = "__term_panel_terms__";
+        for (const item of result.terms) {
+          const group = document.createElement("div");
+          group.className = "__term_panel_term__";
+          const term = document.createElement("dt");
+          term.textContent = item.term;
+          const explanation = document.createElement("dd");
+          explanation.textContent = item.explanation;
+          group.append(term, explanation);
+          list.appendChild(group);
+        }
+        body.appendChild(list);
+      }
+
+      function renderTermError(index) {
+        const body = getPanelBody();
+        const message = buildParagraph("__term_panel_error__", "用語解説を取得できませんでした。もう一度お試しください。");
+        const retry = document.createElement("button");
+        retry.className = "__term_panel_retry__";
+        retry.type = "button";
+        retry.textContent = "再試行";
+        retry.addEventListener("click", () => showTermPanel(index, true), { once: true });
+        body.replaceChildren(message, retry);
+      }
+
+      function hideTermPanel() {
+        if (!state.panel) return;
+        state.panel.hidden = true;
+        state.abortController?.abort();
+        state.abortController = null;
+      }
+
+      function getPanelBody() {
+        return state.panel.querySelector(".__term_panel_body__");
+      }
+
+      function buildParagraph(className, text) {
+        const p = document.createElement("p");
+        p.className = className;
+        p.textContent = text;
+        return p;
+      }
+
+      function normalizeTerms(terms) {
+        if (!Array.isArray(terms)) return [];
+        return terms
+          .map(item => ({
+            term: typeof item?.term === "string" ? item.term.trim() : "",
+            explanation: typeof item?.explanation === "string" ? item.explanation.trim() : ""
+          }))
+          .filter(item => item.term && item.explanation);
+      }
+
+      function bindClicks() {
+        document.addEventListener("click", e => {
+          if (e.target.closest(`#${PANEL_ID}`)) return;
+          const s = e.target.closest(`.${SENTENCE_CLS}`);
+          if (!s || s.closest(`#${UI_ID}`)) return;
+          e.preventDefault();
+          const index = Number(s.dataset.subIndex);
+          const wasActive = s.classList.contains(ACTIVE_CLS);
+          setCurrent(index, false);
+          if (wasActive) {
+            showTermPanel(index);
+          } else {
+            hideTermPanel();
+          }
+        }, true);
+      }
+
+      function bindKeys() {
+        document.addEventListener("keydown", e => {
+          const ae = document.activeElement;
+          if (ae?.tagName === "INPUT" || ae?.tagName === "TEXTAREA" || ae?.isContentEditable) return;
+          if (!e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
+          if (e.key === "ArrowRight") { e.preventDefault(); move(1); }
+          if (e.key === "ArrowLeft")  { e.preventDefault(); move(-1); }
+        });
+      }
+
+      function init() {
+        state.sentences = collectAndWrap();
+        state.ui = buildUI();
+        state.panel = buildTermPanel();
+        bindClicks();
+        bindKeys();
+        if (state.sentences.length) setCurrent(0, false);
+        updateCounter();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
+</body>
+</html>

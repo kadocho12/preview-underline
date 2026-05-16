@@ -1,1 +1,5 @@
 /term-popup-explainer.html
+.dev.vars*
+.wrangler/
+.env*.local
+.vercel/
