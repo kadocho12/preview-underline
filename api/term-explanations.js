@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = "gemini-3.1-flash-lite";
+const DEFAULT_MODEL = "gpt-5.4-nano";
 const MAX_SELECTED_TEXT_LENGTH = 1000;
 const MAX_TERMS = 8;
 
@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     res.status(500).json({ error: "missing_api_key" });
     return;
   }
@@ -34,8 +34,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const terms = await fetchTermExplanations({
-      apiKey: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || DEFAULT_MODEL,
+      apiKey: process.env.OPENAI_API_KEY,
+      model: process.env.OPENAI_MODEL || DEFAULT_MODEL,
       selectedText
     });
 
@@ -70,28 +70,50 @@ function parseJson(text) {
 }
 
 async function fetchTermExplanations({ apiKey, model, selectedText }) {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const endpoint = "https://api.openai.com/v1/chat/completions";
   const prompt = buildPrompt(selectedText);
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey
+      "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      contents: [
+      model,
+      messages: [
         {
           role: "user",
-          parts: [{ text: prompt }]
+          content: prompt
         }
       ],
-      generationConfig: {
-        temperature: 0.2,
-        topP: 0.8,
-        maxOutputTokens: 512,
-        responseMimeType: "application/json",
-        thinkingConfig: {
-          thinkingLevel: "minimal"
+      temperature: 0.2,
+      top_p: 0.8,
+      max_completion_tokens: 512,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "term_explanations",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              terms: {
+                type: "array",
+                maxItems: MAX_TERMS,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    term: { type: "string" },
+                    explanation: { type: "string" }
+                  },
+                  required: ["term", "explanation"]
+                }
+              }
+            },
+            required: ["terms"]
+          }
         }
       }
     })
@@ -99,7 +121,7 @@ async function fetchTermExplanations({ apiKey, model, selectedText }) {
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Gemini API returned ${response.status}: ${detail}`);
+    throw new Error(`OpenAI API returned ${response.status}: ${detail}`);
   }
 
   const data = await response.json();
@@ -124,9 +146,7 @@ function buildPrompt(selectedText) {
 }
 
 function extractResponseText(data) {
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!Array.isArray(parts)) return "";
-  return parts.map(part => part?.text || "").join("").trim();
+  return data?.choices?.[0]?.message?.content?.trim() || "";
 }
 
 function parseJsonResponse(text) {
