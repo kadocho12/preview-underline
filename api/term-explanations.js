@@ -89,7 +89,10 @@ async function fetchTermExplanations({ apiKey, model, selectedText }) {
         temperature: 0.2,
         topP: 0.8,
         maxOutputTokens: 512,
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        thinkingConfig: {
+          thinkingLevel: "minimal"
+        }
       }
     })
   });
