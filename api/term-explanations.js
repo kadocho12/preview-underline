@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = "gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "gemini-3.1-flash-lite";
 const MAX_SELECTED_TEXT_LENGTH = 1000;
 const MAX_TERMS = 8;
 
