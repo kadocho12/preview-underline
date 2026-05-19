@@ -23,6 +23,11 @@
 
       --toggle-bg: #e8e8e8;
       --toggle-fg: #222222;
+
+      --highlight-rgb: 255, 90, 95;
+      --highlight-alpha: .14;
+      --underline-rgb: 255, 90, 95;
+      --underline-alpha: 1;
     }
     [data-theme="dark"] {
       --bg:        #1a1a1a;
@@ -142,6 +147,125 @@
     #__sub_ui__ .__sub_mode__ {
       min-width: 92px;
     }
+    #__sub_ui__ .__sub_color_btn__[aria-expanded="true"] {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, .35) inset;
+    }
+    #__sub_ui__ .__sub_panel__ {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 12px);
+      width: min(420px, calc(100vw - 32px));
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, .45);
+      border-radius: 18px;
+      background: rgba(240, 246, 255, .94);
+      color: #111111;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(18px);
+    }
+    #__sub_ui__ .__sub_panel__[hidden] { display: none; }
+    #__sub_ui__ .__sub_panel_head__ {
+      display: grid;
+      grid-template-columns: 36px 1fr 36px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    #__sub_ui__ .__sub_panel_title__ {
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    #__sub_ui__ .__sub_panel_close__ {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .72);
+      color: #111111;
+      font-size: 22px;
+      line-height: 1;
+    }
+    #__sub_ui__ .__sub_panel_spacer__ { width: 36px; }
+    #__sub_ui__ .__sub_tabs__ {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      background: rgba(120, 160, 210, .24);
+    }
+    #__sub_ui__ .__sub_tabs__ button {
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: transparent;
+      color: #111111;
+      font-weight: 700;
+    }
+    #__sub_ui__ .__sub_tabs__ button[aria-selected="true"] {
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    }
+    #__sub_ui__ .__sub_grid__ {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 0;
+      overflow: hidden;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      background: #ffffff;
+    }
+    #__sub_ui__ .__sub_swatch__ {
+      aspect-ratio: 1;
+      min-width: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      outline: 0 solid transparent;
+    }
+    #__sub_ui__ .__sub_swatch__[aria-pressed="true"] {
+      position: relative;
+      z-index: 1;
+      outline: 3px solid #ffffff;
+      outline-offset: -5px;
+      box-shadow: inset 0 0 0 5px rgba(0, 0, 0, .22);
+    }
+    #__sub_ui__ .__sub_slider_row__ {
+      display: grid;
+      grid-template-columns: 1fr 64px;
+      gap: 12px;
+      align-items: center;
+    }
+    #__sub_ui__ .__sub_slider_label__ {
+      grid-column: 1 / -1;
+      color: rgba(17, 17, 17, .64);
+      font-weight: 700;
+    }
+    #__sub_ui__ .__sub_opacity__ {
+      width: 100%;
+      accent-color: rgb(var(--panel-color-rgb, 255, 90, 95));
+    }
+    #__sub_ui__ .__sub_value__ {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .86);
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    @media (max-width: 560px) {
+      #__sub_ui__ {
+        left: 12px;
+        right: 12px;
+        justify-content: center;
+      }
+      #__sub_ui__ .__sub_panel__ {
+        right: 50%;
+        transform: translateX(50%);
+        width: calc(100vw - 24px);
+      }
+    }
 
     /* ========== 文ハイライト ========== */
     .__sub_sentence__ { cursor: pointer; }
@@ -149,11 +273,11 @@
       text-decoration-line: underline;
       text-decoration-thickness: 0.22em;
       text-underline-offset: 0.18em;
-      text-decoration-color: #ff5a5f;
+      text-decoration-color: rgba(var(--underline-rgb), var(--underline-alpha));
       background-image: linear-gradient(
         to top,
-        rgba(255, 90, 95, .14),
-        rgba(255, 90, 95, .14)
+        rgba(var(--highlight-rgb), var(--highlight-alpha)),
+        rgba(var(--highlight-rgb), var(--highlight-alpha))
       );
       background-repeat: no-repeat;
       background-size: 100% 100%;
@@ -421,13 +545,32 @@
       const SENTENCE_CLS = "__sub_sentence__";
       const ACTIVE_CLS   = "__sub_active__";
       const MODE_STORE   = "highlightMode";
+      const STYLE_STORE  = "highlightStyleSettings";
       const DEFAULT_MODE = "underline";
+      const DEFAULT_STYLES = {
+        highlight: { color: "#ff5a5f", alpha: 0.14 },
+        underline: { color: "#ff5a5f", alpha: 1 }
+      };
+      const SWATCHES = [
+        "#ffffff", "#e7e7e7", "#d2d2d2", "#bdbdbd", "#a8a8a8", "#929292", "#7d7d7d", "#686868", "#535353", "#3d3d3d", "#282828", "#000000",
+        "#163f50", "#10265f", "#1b0b47", "#390d45", "#4b0f22", "#621307", "#65270b", "#5a3b0d", "#54400f", "#686817", "#515d14", "#263f14",
+        "#22576d", "#1b3c84", "#2a155e", "#4b175d", "#651b34", "#822012", "#833713", "#784f17", "#6c5318", "#848522", "#687421", "#36551e",
+        "#337994", "#2857a7", "#3a2081", "#68238a", "#883156", "#a52e1d", "#a94a1f", "#9d6a25", "#8f7027", "#aaa92d", "#879532", "#4d7430",
+        "#4397bb", "#2f67c7", "#512aa3", "#7d2bae", "#a43d6b", "#c43624", "#c95a25", "#ba7e2c", "#ab8731", "#c9c735", "#a4b83c", "#66933c",
+        "#51a9d1", "#326df0", "#6137bf", "#9633c2", "#ba477a", "#dd3927", "#df6726", "#d18f30", "#c29d39", "#e6e23b", "#bed748", "#75a94c",
+        "#5dbce0", "#5388e6", "#6a3fe0", "#b244dc", "#d24f85", "#ec4d32", "#ed7833", "#efa63d", "#edbf48", "#f7f342", "#d3ec4b", "#89bf56",
+        "#73c9e8", "#7fa4ee", "#8156e9", "#c15ce7", "#d9739d", "#ef6b5f", "#f08c58", "#f3b95c", "#f5cf65", "#fbf76f", "#dff06f", "#9dcb70",
+        "#9ad7ec", "#a6bff1", "#a28bed", "#cf86eb", "#df9bb8", "#f29a94", "#f3ad83", "#f5ca85", "#f7db8c", "#fcfaa2", "#e8f4a0", "#b8d996",
+        "#c7e8f1", "#cedaf3", "#c9bdf0", "#e2c4ee", "#ebceda", "#f4d5d2", "#f5dfd4", "#f8ead4", "#f8efd8", "#fffde2", "#f1f7d8", "#dcebd3"
+      ];
 
       const state = {
         sentences: [],
         currentIndex: -1,
         ui: null,
-        mode: DEFAULT_MODE
+        mode: DEFAULT_MODE,
+        styleTarget: "highlight",
+        styles: structuredClone(DEFAULT_STYLES)
       };
 
       function shouldSkip(node) {
@@ -527,6 +670,61 @@
         }
       }
 
+      function isHexColor(value) {
+        return /^#[0-9a-f]{6}$/i.test(value);
+      }
+
+      function clampAlpha(value, fallback) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.max(0, Math.min(1, n));
+      }
+
+      function hexToRgbParts(hex) {
+        const value = hex.replace("#", "");
+        return [
+          parseInt(value.slice(0, 2), 16),
+          parseInt(value.slice(2, 4), 16),
+          parseInt(value.slice(4, 6), 16)
+        ].join(", ");
+      }
+
+      function readStyles() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STYLE_STORE));
+          return {
+            highlight: {
+              color: isHexColor(saved?.highlight?.color) ? saved.highlight.color : DEFAULT_STYLES.highlight.color,
+              alpha: clampAlpha(saved?.highlight?.alpha, DEFAULT_STYLES.highlight.alpha)
+            },
+            underline: {
+              color: isHexColor(saved?.underline?.color) ? saved.underline.color : DEFAULT_STYLES.underline.color,
+              alpha: clampAlpha(saved?.underline?.alpha, DEFAULT_STYLES.underline.alpha)
+            }
+          };
+        } catch {
+          return structuredClone(DEFAULT_STYLES);
+        }
+      }
+
+      function saveStyles() {
+        try {
+          localStorage.setItem(STYLE_STORE, JSON.stringify(state.styles));
+        } catch {
+          // file:// や埋め込みブラウザでは保存できない場合がある。
+        }
+      }
+
+      function applyStyles(persist = true) {
+        const root = document.documentElement;
+        root.style.setProperty("--highlight-rgb", hexToRgbParts(state.styles.highlight.color));
+        root.style.setProperty("--highlight-alpha", state.styles.highlight.alpha);
+        root.style.setProperty("--underline-rgb", hexToRgbParts(state.styles.underline.color));
+        root.style.setProperty("--underline-alpha", state.styles.underline.alpha);
+        updateStyleControls();
+        if (persist) saveStyles();
+      }
+
       function updateModeButton() {
         const btn = state.ui?.querySelector("[data-mode-toggle]");
         if (!btn) return;
@@ -550,16 +748,111 @@
         applyMode(state.mode === "highlight-only" ? DEFAULT_MODE : "highlight-only");
       }
 
+      function getTargetStyle() {
+        return state.styles[state.styleTarget];
+      }
+
+      function updateStyleControls() {
+        if (!state.ui) return;
+        const current = getTargetStyle();
+        state.ui.style.setProperty("--panel-color-rgb", hexToRgbParts(current.color));
+
+        state.ui.querySelectorAll("[data-style-tab]").forEach(btn => {
+          btn.setAttribute("aria-selected", String(btn.dataset.styleTab === state.styleTarget));
+        });
+        state.ui.querySelectorAll("[data-swatch]").forEach(btn => {
+          btn.setAttribute("aria-pressed", String(btn.dataset.swatch === current.color));
+        });
+
+        const slider = state.ui.querySelector("[data-opacity-slider]");
+        const value = state.ui.querySelector("[data-opacity-value]");
+        const percent = Math.round(current.alpha * 100);
+        if (slider) slider.value = String(percent);
+        if (value) value.textContent = `${percent}%`;
+      }
+
+      function setStyleTarget(target) {
+        if (!state.styles[target]) return;
+        state.styleTarget = target;
+        updateStyleControls();
+      }
+
+      function setTargetColor(color) {
+        if (!isHexColor(color)) return;
+        getTargetStyle().color = color;
+        applyStyles();
+      }
+
+      function setTargetAlpha(percent) {
+        getTargetStyle().alpha = clampAlpha(Number(percent) / 100, getTargetStyle().alpha);
+        applyStyles();
+      }
+
+      function togglePanel(force) {
+        const panel = state.ui?.querySelector("[data-style-panel]");
+        const btn = state.ui?.querySelector("[data-panel-toggle]");
+        if (!panel || !btn) return;
+        const shouldOpen = typeof force === "boolean" ? force : panel.hidden;
+        panel.hidden = !shouldOpen;
+        btn.setAttribute("aria-expanded", String(shouldOpen));
+        if (shouldOpen) updateStyleControls();
+      }
+
       function buildUI() {
         const ui = document.createElement("div");
         ui.id = UI_ID;
+        const swatches = SWATCHES.map(color => (
+          `<button class="__sub_swatch__" type="button" data-swatch="${color}" style="background:${color}" aria-label="${color}"></button>`
+        )).join("");
         ui.innerHTML = `
           <button type="button" data-dir="-1">前へ</button>
           <div class="__sub_counter__">0 / 0</div>
           <button type="button" data-dir="1">次へ</button>
           <button class="__sub_mode__" type="button" data-mode-toggle aria-pressed="false">下線なし</button>
+          <button class="__sub_color_btn__" type="button" data-panel-toggle aria-expanded="false">カラー</button>
+          <div class="__sub_panel__" data-style-panel hidden>
+            <div class="__sub_panel_head__">
+              <span class="__sub_panel_spacer__"></span>
+              <div class="__sub_panel_title__">カラー</div>
+              <button class="__sub_panel_close__" type="button" data-panel-close aria-label="閉じる">×</button>
+            </div>
+            <div class="__sub_tabs__" role="tablist" aria-label="対象">
+              <button type="button" data-style-tab="highlight" role="tab" aria-selected="true">ハイライト</button>
+              <button type="button" data-style-tab="underline" role="tab" aria-selected="false">下線</button>
+            </div>
+            <div class="__sub_grid__">${swatches}</div>
+            <div class="__sub_slider_row__">
+              <div class="__sub_slider_label__">不透明度</div>
+              <input class="__sub_opacity__" type="range" min="0" max="100" step="1" data-opacity-slider aria-label="不透明度">
+              <div class="__sub_value__" data-opacity-value>100%</div>
+            </div>
+          </div>
         `;
         ui.addEventListener("click", e => {
+          const panelToggle = e.target.closest("button[data-panel-toggle]");
+          if (panelToggle) {
+            e.preventDefault();
+            togglePanel();
+            return;
+          }
+          const panelClose = e.target.closest("button[data-panel-close]");
+          if (panelClose) {
+            e.preventDefault();
+            togglePanel(false);
+            return;
+          }
+          const tab = e.target.closest("button[data-style-tab]");
+          if (tab) {
+            e.preventDefault();
+            setStyleTarget(tab.dataset.styleTab);
+            return;
+          }
+          const swatch = e.target.closest("button[data-swatch]");
+          if (swatch) {
+            e.preventDefault();
+            setTargetColor(swatch.dataset.swatch);
+            return;
+          }
           const modeBtn = e.target.closest("button[data-mode-toggle]");
           if (modeBtn) {
             e.preventDefault();
@@ -570,6 +863,11 @@
           if (!btn) return;
           e.preventDefault();
           move(Number(btn.dataset.dir));
+        });
+        ui.addEventListener("input", e => {
+          const slider = e.target.closest("[data-opacity-slider]");
+          if (!slider) return;
+          setTargetAlpha(slider.value);
         });
         document.body.appendChild(ui);
         return ui;
@@ -586,6 +884,10 @@
 
       function bindKeys() {
         document.addEventListener("keydown", e => {
+          if (e.key === "Escape") {
+            togglePanel(false);
+            return;
+          }
           const ae = document.activeElement;
           if (ae?.tagName === "INPUT" || ae?.tagName === "TEXTAREA" || ae?.isContentEditable) return;
           if (!e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -596,9 +898,12 @@
 
       function init() {
         applyMode(readMode(), false);
+        state.styles = readStyles();
+        applyStyles(false);
         state.sentences = collectAndWrap();
         state.ui = buildUI();
         updateModeButton();
+        updateStyleControls();
         bindClicks();
         bindKeys();
         if (state.sentences.length) setCurrent(0, false);
