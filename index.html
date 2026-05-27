@@ -143,13 +143,15 @@
       transition: background 0.2s, color 0.2s;
     }
     #__sub_ui__ button:hover { opacity: .9; }
-    #__sub_ui__ .__sub_counter__ {
-      min-width: 72px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
     #__sub_ui__ .__sub_mode__ {
       min-width: 92px;
+    }
+    #__sub_ui__ .__sub_divider__ {
+      width: 1px;
+      height: 28px;
+      margin: 0 2px;
+      background: currentColor;
+      opacity: .28;
     }
     #__sub_ui__ .__sub_color_btn__[aria-expanded="true"] {
       box-shadow: 0 0 0 2px rgba(255, 255, 255, .35) inset;
@@ -634,13 +636,6 @@
         return spans;
       }
 
-      function updateCounter() {
-        const el = state.ui?.querySelector(".__sub_counter__");
-        if (!el) return;
-        el.textContent = state.sentences.length
-          ? `${state.currentIndex + 1} / ${state.sentences.length}` : "0 / 0";
-      }
-
       function setCurrent(index, scroll = true) {
         if (!state.sentences.length) return;
         const next = Math.max(0, Math.min(index, state.sentences.length - 1));
@@ -651,7 +646,6 @@
           target.classList.add(ACTIVE_CLS);
           if (scroll) target.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-        updateCounter();
       }
 
       function move(delta) {
@@ -861,11 +855,11 @@
           `<button class="__sub_swatch__" type="button" data-swatch="${color}" style="background:${color}" aria-label="${color}"></button>`
         )).join("");
         ui.innerHTML = `
-          <button type="button" data-dir="-1">前へ</button>
-          <div class="__sub_counter__">0 / 0</div>
-          <button type="button" data-dir="1">次へ</button>
           <button class="__sub_mode__" type="button" data-mode-toggle aria-pressed="false">下線なし</button>
           <button class="__sub_color_btn__" type="button" data-panel-toggle aria-expanded="false" aria-controls="__sub_color_panel__">カラー</button>
+          <span class="__sub_divider__" aria-hidden="true"></span>
+          <button type="button" data-dir="-1">前へ</button>
+          <button type="button" data-dir="1">次へ</button>
           <div class="__sub_panel__" id="__sub_color_panel__" data-style-panel role="dialog" aria-modal="true" aria-label="カラー設定" hidden>
             <div class="__sub_panel_head__">
               <span class="__sub_panel_spacer__"></span>
@@ -964,7 +958,6 @@
         bindClicks();
         bindKeys();
         if (state.sentences.length) setCurrent(0, false);
-        updateCounter();
       }
 
       if (document.readyState === "loading") {
