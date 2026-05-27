@@ -231,6 +231,14 @@
       outline-offset: -5px;
       box-shadow: inset 0 0 0 5px rgba(0, 0, 0, .22);
     }
+    #__sub_ui__ .__sub_swatch__:focus-visible {
+      position: relative;
+      z-index: 2;
+      outline: none;
+      box-shadow:
+        inset 0 0 0 3px #ffffff,
+        inset 0 0 0 6px #111111;
+    }
     #__sub_ui__ .__sub_slider_row__ {
       display: grid;
       grid-template-columns: 1fr 64px;
@@ -562,7 +570,8 @@
         ui: null,
         mode: DEFAULT_MODE,
         styleTarget: "highlight",
-        styles: structuredClone(DEFAULT_STYLES)
+        styles: structuredClone(DEFAULT_STYLES),
+        returnFocus: null
       };
 
       function shouldSkip(node) {
@@ -780,14 +789,65 @@
         applyStyles();
       }
 
+      function getPanel() {
+        return state.ui?.querySelector("[data-style-panel]");
+      }
+
+      function isPanelOpen() {
+        const panel = getPanel();
+        return Boolean(panel && !panel.hidden);
+      }
+
+      function getPanelFocusables() {
+        const panel = getPanel();
+        if (!panel || panel.hidden) return [];
+        return [...panel.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')]
+          .filter(el => !el.disabled && el.getAttribute("aria-hidden") !== "true");
+      }
+
+      function focusPanelStart() {
+        const panel = getPanel();
+        if (!panel || panel.hidden) return;
+        const target = panel.querySelector('[data-style-tab][aria-selected="true"]')
+          || getPanelFocusables()[0];
+        target?.focus({ preventScroll: true });
+      }
+
+      function trapPanelFocus(e) {
+        if (!isPanelOpen() || e.key !== "Tab") return false;
+        const focusables = getPanelFocusables();
+        if (!focusables.length) return false;
+
+        const active = document.activeElement;
+        const currentIndex = focusables.indexOf(active);
+
+        e.preventDefault();
+        const nextIndex = currentIndex < 0
+          ? 0
+          : (currentIndex + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length;
+        focusables[nextIndex].focus({ preventScroll: true });
+        return true;
+      }
+
       function togglePanel(force) {
-        const panel = state.ui?.querySelector("[data-style-panel]");
+        const panel = getPanel();
         const btn = state.ui?.querySelector("[data-panel-toggle]");
         if (!panel || !btn) return;
+        const wasOpen = !panel.hidden;
         const shouldOpen = typeof force === "boolean" ? force : panel.hidden;
+        if (shouldOpen && !wasOpen) {
+          state.returnFocus = document.activeElement;
+        }
         panel.hidden = !shouldOpen;
         btn.setAttribute("aria-expanded", String(shouldOpen));
-        if (shouldOpen) updateStyleControls();
+        if (shouldOpen) {
+          updateStyleControls();
+          focusPanelStart();
+        } else if (wasOpen) {
+          const target = state.returnFocus?.isConnected ? state.returnFocus : btn;
+          target?.focus({ preventScroll: true });
+          state.returnFocus = null;
+        }
       }
 
       function buildUI() {
@@ -801,8 +861,8 @@
           <div class="__sub_counter__">0 / 0</div>
           <button type="button" data-dir="1">次へ</button>
           <button class="__sub_mode__" type="button" data-mode-toggle aria-pressed="false">下線なし</button>
-          <button class="__sub_color_btn__" type="button" data-panel-toggle aria-expanded="false">カラー</button>
-          <div class="__sub_panel__" data-style-panel hidden>
+          <button class="__sub_color_btn__" type="button" data-panel-toggle aria-expanded="false" aria-controls="__sub_color_panel__">カラー</button>
+          <div class="__sub_panel__" id="__sub_color_panel__" data-style-panel role="dialog" aria-modal="true" aria-label="カラー設定" hidden>
             <div class="__sub_panel_head__">
               <span class="__sub_panel_spacer__"></span>
               <div class="__sub_panel_title__">カラー</div>
@@ -876,6 +936,7 @@
 
       function bindKeys() {
         document.addEventListener("keydown", e => {
+          if (trapPanelFocus(e)) return;
           if (e.key === "Escape") {
             togglePanel(false);
             return;
