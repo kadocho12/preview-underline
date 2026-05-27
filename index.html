@@ -208,19 +208,19 @@
     }
     #__sub_ui__ .__sub_grid__ {
       display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 0;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
       overflow: hidden;
       margin-bottom: 16px;
-      border-radius: 12px;
-      background: #ffffff;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .46);
     }
     #__sub_ui__ .__sub_swatch__ {
       aspect-ratio: 1;
       min-width: 0;
       padding: 0;
       border: none;
-      border-radius: 0;
+      border-radius: 10px;
       box-shadow: none;
       outline: 0 solid transparent;
     }
@@ -552,16 +552,8 @@
         underline: { color: "#ff5a5f", alpha: 1 }
       };
       const SWATCHES = [
-        "#ffffff", "#e7e7e7", "#d2d2d2", "#bdbdbd", "#a8a8a8", "#929292", "#7d7d7d", "#686868", "#535353", "#3d3d3d", "#282828", "#000000",
-        "#163f50", "#10265f", "#1b0b47", "#390d45", "#4b0f22", "#621307", "#65270b", "#5a3b0d", "#54400f", "#686817", "#515d14", "#263f14",
-        "#22576d", "#1b3c84", "#2a155e", "#4b175d", "#651b34", "#822012", "#833713", "#784f17", "#6c5318", "#848522", "#687421", "#36551e",
-        "#337994", "#2857a7", "#3a2081", "#68238a", "#883156", "#a52e1d", "#a94a1f", "#9d6a25", "#8f7027", "#aaa92d", "#879532", "#4d7430",
-        "#4397bb", "#2f67c7", "#512aa3", "#7d2bae", "#a43d6b", "#c43624", "#c95a25", "#ba7e2c", "#ab8731", "#c9c735", "#a4b83c", "#66933c",
-        "#51a9d1", "#326df0", "#6137bf", "#9633c2", "#ba477a", "#dd3927", "#df6726", "#d18f30", "#c29d39", "#e6e23b", "#bed748", "#75a94c",
-        "#5dbce0", "#5388e6", "#6a3fe0", "#b244dc", "#d24f85", "#ec4d32", "#ed7833", "#efa63d", "#edbf48", "#f7f342", "#d3ec4b", "#89bf56",
-        "#73c9e8", "#7fa4ee", "#8156e9", "#c15ce7", "#d9739d", "#ef6b5f", "#f08c58", "#f3b95c", "#f5cf65", "#fbf76f", "#dff06f", "#9dcb70",
-        "#9ad7ec", "#a6bff1", "#a28bed", "#cf86eb", "#df9bb8", "#f29a94", "#f3ad83", "#f5ca85", "#f7db8c", "#fcfaa2", "#e8f4a0", "#b8d996",
-        "#c7e8f1", "#cedaf3", "#c9bdf0", "#e2c4ee", "#ebceda", "#f4d5d2", "#f5dfd4", "#f8ead4", "#f8efd8", "#fffde2", "#f1f7d8", "#dcebd3"
+        "#ff2d95", "#ff2d2d", "#ff7a00", "#ffe600", "#b6ff00", "#21ff4b",
+        "#00ffd5", "#00a3ff", "#2457ff", "#7a2dff", "#c02dff", "#ff40c8"
       ];
 
       const state = {
